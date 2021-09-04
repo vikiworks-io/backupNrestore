@@ -1,11 +1,11 @@
 ## Backup and Restore Website
 
-These scripts are used to backup and restore a website. 
+Utility to backup and restore a webite. This utility can backup `any website with maximum of 4 databases.
 
 ## Backup website
 
   - cd backupNRestore
-  - feed your website configuration @ config.sh
+  - feed your website configuration in config.sh
   - ./backup.sh 
     [ The backed up website will be compressed and stored as .tar.gz ]
     [ Ex: test.tar.gz ]
