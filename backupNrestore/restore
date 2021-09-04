@@ -1,0 +1,347 @@
+#!/bin/bash
+
+# restore a website from from backup
+#
+#		Author	: Viki (a) Vignesh Natarajan 
+#		Contact	: vikilabs.org
+#		Licence : MIT
+
+TOOL_NAME="backupNrestore"
+config_mismatch=0
+
+function get_current_dir()
+{
+    CURRENT_DIR=`pwd -P`
+}
+
+function is_db_empty()
+{
+    DB_NAME=$1
+    DB_USER=$2
+    DB_PASS=$3
+
+    if [[ -z $MYSQL_ADMIN_USERNAME ]]; then
+        table_count=$(mysql -u$DB_USER -p$DB_PASS -h $DB_HOST -P $DB_PORT $DB_NAME -e "SHOW TABLES;" | wc -l)
+    else
+        table_count=$(mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT $DB_NAME -e "SHOW TABLES;" | wc -l)
+    fi
+
+    if [ $table_count -gt 0 ];then
+        echo "  [ ERROR ] [ ${LINENO} ] DB is not empty ( table_count : $table_count ), truncate database before restore"
+        echo
+        echo "     -> $DB_NAME"
+        echo
+        echo
+        exit 1
+    fi
+
+}
+
+function db_empty_check()
+{
+	if [ -n $DB1_NAME ]; then
+	    is_db_empty  $DB1_NAME $DB1_USERNAME  $DB1_PASSWORD 
+	fi
+
+	if [ -n $DB2_NAME ]; then
+	    is_db_empty  $DB2_NAME $DB2_USERNAME  $DB2_PASSWORD 
+	fi
+
+	if [ -n $DB3_NAME ]; then
+	    is_db_empty  $DB3_NAME $DB3_USERNAME  $DB3_PASSWORD 
+	fi
+
+	if [ -n $DB4_NAME ]; then
+	    is_db_empty  $DB4_NAME $DB4_USERNAME  $DB4_PASSWORD 
+	fi
+}
+
+function dir_empty_check()
+{
+    file_count=`ls ${WEBSITE_ROOT_DIR}/ | wc -l`
+    if [ $file_count -gt 0 ];then
+        echo "  [ ERROR ] [ ${LINENO} ] website root directory is not empty, clear all files before restoring"
+        echo
+        echo "      -> $WEBSITE_ROOT_DIR"
+        echo
+        echo
+        exit 1
+    fi
+}
+
+function config_mismatch_check(){
+    OLD=$1
+    NEW=$2
+    if [ "$OLD" = "$NEW" ]; then
+	echo "[ WARNING ] manually search and replace the following string,"
+        echo
+	echo "    [ $OLD -> $NEW ]"
+        echo
+        echo "Location to change: "
+        echo "    "
+        echo "    -> $SOURCE_PATH/db"
+        echo "    -> $SOURCE_PATH/code"
+        echo "    -> $CURRENT_DIR/.config_old.sh"
+        echo "    "
+	config_mismatch=1
+    fi
+}
+
+function verify_config()
+{
+    config_mismatch_check $OLD_DOMAIN $DOMAIN
+
+    config_mismatch_check $OLD_WEBSITE_ROOT_DIR $WEBSITE_ROOT_DIR
+
+    config_mismatch_check $OLD_DB1_NAME $DB1_NAME
+    config_mismatch_check $OLD_DB2_NAME $DB2_NAME
+    config_mismatch_check $OLD_DB3_NAME $DB3_NAME
+    config_mismatch_check $OLD_DB4_NAME $DB4_NAME
+
+    config_mismatch_check $OLD_DB1_USERNAME $DB1_USERNAME
+    config_mismatch_check $OLD_DB2_USERNAME $DB2_USERNAME
+    config_mismatch_check $OLD_DB3_USERNAME $DB3_USERNAME
+    config_mismatch_check $OLD_DB4_USERNAME $DB4_USERNAME
+
+    config_mismatch_check $OLD_DB1_PASSWORD $DB1_PASSWORD 
+    config_mismatch_check $OLD_DB2_PASSWORD $DB2_PASSWORD
+    config_mismatch_check $OLD_DB3_PASSWORD $DB3_PASSWORD
+    config_mismatch_check $OLD_DB4_PASSWORD $DB4_PASSWORD
+}
+
+
+function import_config()
+{
+    #Old Config
+    if [ ! -f "$CURRENT_DIR/.config_old.sh" ]; then
+        echo "  [ ERROR ] Restore Failed, Old config file missing ( $CURRENT_DIR/.config_old.sh )"
+        exit 1
+    fi
+
+    source $CURRENT_DIR/.config_old.sh
+    OLD_DOMAIN=$DOMAIN 
+    OLD_WEBSITE_ROOT_DIR=$WEBSITE_ROOT_DIR
+    OLD_DB1_NAME=$DB1_NAME 
+    OLD_DB2_NAME=$DB2_NAME 
+    OLD_DB3_NAME=$DB3_NAME 
+    OLD_DB4_NAME=$DB4_NAME 
+ 
+    OLD_DB1_USERNAME=$DB1_USERNAME 
+    OLD_DB2_USERNAME=$DB2_USERNAME 
+    OLD_DB3_USERNAME=$DB3_USERNAME 
+    OLD_DB4_USERNAME=$DB4_USERNAME 
+
+    OLD_DB1_PASSWORD=$DB1_PASSWORD  
+    OLD_DB2_PASSWORD=$DB2_PASSWORD  
+    OLD_DB3_PASSWORD=$DB3_PASSWORD  
+    OLD_DB4_PASSWORD=$DB4_PASSWORD  
+ 
+
+    #New Config
+    if [ -f "$CURRENT_DIR/config.sh" ]; then
+        echo "  [ status ] importing config ( $CURRENT_DIR/config.sh )"
+        source $CURRENT_DIR/config.sh
+    else
+        echo "  [ ERROR ] Restore Failed, config file missing ( $CURRENT_DIR/config.sh )"
+        exit 1
+    fi
+
+    verify_config
+
+    if [ $config_mismatch -eq 1 ]; then
+        echo " [ ERROR ] there is a mismatch in old and new configuration, fix the configuration and try restore again"
+        exit 1
+    fi
+}
+
+#Get Website Source Path
+function set_source_path()
+{
+    cd $CURRENT_DIR
+    [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ]"; exit 1; }
+    cd ..
+    SOURCE_PATH=`pwd -P`
+}
+
+function check_whether_webroot_dir_inside_source_dir()
+{
+    # Example:
+    #   
+    #   if (/home/backup/website) inside ( /home/backup ) : TRUE 
+    #   
+    if [[ $WEBSITE_ROOT_DIR =~ "$SOURCE_PATH" ]]; then
+        echo
+        echo "  [ possible error ] It looks like new website root directory is inside source directory"
+        echo
+        echo "       -> [ SOURCE_DIR : $SOURCE_PATH ]"
+        echo
+        echo "       -> [ WEBSITE_ROOT_DIR : $WEBSITE_ROOT_DIR ]"
+        echo
+        echo
+        exit 1
+    fi  
+} 
+
+function empty_config_check()
+{
+    config_error=0
+
+    echo
+    [ -z $DOMAIN ] && { echo "  [ CONFIG ERROR ] :  DOMAIN" ; config_error=1; }
+    [ -z $DB1_NAME ] && { echo "  [ CONFIG ERROR ] :  DB1_NAME" ; config_error=1; }
+    [ -z $DB1_USERNAME ] && { echo "  [ CONFIG ERROR ] :  DB1_USERNAME" ; config_error=1; }
+    [ -z $DB1_PASSWORD ] && { echo "  [ CONFIG ERROR ] :  DB1_PASSWORD" ; config_error=1; }
+    [ -z $DB_HOST ] && { echo "  [ CONFIG ERROR ] :  DB_HOST" ; config_error=1; }
+    [ -z $DB_PORT ] && { echo "  [ CONFIG ERROR ] :  DB_PORT" ; config_error=1; }
+    [ -z $WEBSITE_ROOT_DIR ] && { echo "  [ CONFIG ERROR ] :  WEBSITE_ROOT_DIR" ; config_error=1; }
+    [ -z $BACKUP_DIR ] && { echo "  [ CONFIG ERROR ] :  BACKUP_DIR" ; config_error=1; }
+    [ -z $LOG_FILE ] && { echo "  [ CONFIG ERROR ] :  LOG_FILE" ; config_error=1; }
+
+    if [ $config_error -eq 1 ]; then
+        echo
+        echo "  [ ERROR ] Website Restore Failed, Invalid Configuration( $CURRENT_DIR/config.sh ) "
+        echo
+        exit 1
+   fi
+}
+
+function remove_trailing_slash()
+{
+   BACKUP_DIR=`echo ${BACKUP_DIR%/}`
+   BACKUP_DIR=`echo ${BACKUP_DIR%/}`
+   
+   WEBSITE_ROOT_DIR=`echo ${WEBSITE_ROOT_DIR%/}`
+   WEBSITE_ROOT_DIR=`echo ${WEBSITE_ROOT_DIR%/}`
+   
+   DOMAIN=`echo ${DOMAIN%/}`
+   DOMAIN=`echo ${DOMAIN%/}`
+}
+
+function print_config()
+{
+    echo
+    echo "  Website Root      : $WEBSITE_ROOT_DIR"
+    echo "  Backup Directory  : $BACKUP_DIR"
+    echo "  DB HOST           : $DB_HOST"
+    echo "  DB PORT           : $DB_PORT"
+    
+    [ ! -z $DB1_NAME ] && 	{ echo "  DB NAME          (1) : $DB1_NAME"; }
+    [ ! -z $DB2_NAME ] && 	{ echo "  DB NAME          (2) : $DB2_NAME"; }
+    [ ! -z $DB3_NAME ] && 	{ echo "  DB NAME          (3) : $DB3_NAME"; }
+    [ ! -z $DB4_NAME ] && 	{ echo "  DB NAME          (4) : $DB4_NAME"; }
+    echo 
+    echo 
+    echo 
+    [ ! -z $DB1_USERNAME ] && 	{ echo "  DB USERNAME      (1) : $DB1_USERNAME"; }
+    [ ! -z $DB2_USERNAME ] && 	{ echo "  DB USERNAME      (2) : $DB2_USERNAME"; }
+    [ ! -z $DB3_USERNAME ] && 	{ echo "  DB USERNAME      (3) : $DB3_USERNAME"; }
+    [ ! -z $DB4_USERNAME ] && 	{ echo "  DB USERNAME      (4) : $DB4_USERNAME"; }
+     
+    echo "  Backup Label      : $BACKUP_LABEL"
+    echo "  Backup File       : ${BACKUP_LABEL}.tar.gz"
+    echo 
+}
+
+
+function get_abs_path_website_root()
+{
+    cd $WEBSITE_ROOT_DIR
+    [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ]"; exit 1; }
+    WEBSITE_ROOT_DIR=`pwd -P`
+}
+
+function import_db(){
+	DB_NAME=$1
+	DB_USER=$2
+	DB_PASS=$3
+	DB_DUMP=$4
+	
+	if [[ -z $MYSQL_ADMIN_USERNAME ]]; then
+		mysql -u$DB_USER  -p$DB_PASS $DB_NAME < $DB_DUMP
+		[ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] Database Import Failed ( DB_NAME : $DB_NAME) "; exit 1; }
+	else
+		mysql -u$MYSQL_ADMIN_USERNAME  -p$MYSQL_ADMIN_PASSWORD $DB_NAME < $DB_DUMP
+		[ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] Database Import Failed ( DB_NAME : $DB_NAME) "; exit 1; }
+	fi
+
+
+}
+
+function importe_database()
+{
+    cd $SOURCE_PATH
+
+    if [ -n $DB1_NAME ]; then
+    import_db $DB1_NAME $DB1_USERNAME $DB1_PASSWORD "db/${DB1_NAME}.sql"
+    fi
+
+    if [ -n $DB2_NAME ]; then
+    import_db $DB2_NAME $DB2_USERNAME $DB2_PASSWORD "db/${DB2_NAME}.sql"
+    fi
+    
+    if [ -n $DB3_NAME ]; then
+    import_db $DB3_NAME $DB3_USERNAME $DB3_PASSWORD "db/${DB3_NAME}.sql"
+    fi    
+    
+    if [ -n $DB4_NAME ]; then
+    import_db $DB4_NAME $DB4_USERNAME $DB4_PASSWORD "db/${DB4_NAME}.sql"
+    fi
+}
+
+function importe_code()
+{
+    cd $SOURCE_PATH
+
+    cp -arf code/. ${WEBSITE_ROOT_DIR}/
+    [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] Website copy failed"; exit 1; }
+}
+
+function verify_dns_config()
+{
+    server_ip=`ping $DOMAIN -c1 | head -1 | grep -Eo '[0-9.]{4,}'`
+    ifconfig | grep $server_ip 2>/dev/null 1>/dev/null
+
+    if [ $? -ne 0 ]; then
+	echo 
+	echo "[ WARNING! ] Domain name ( $DOMAIN ) is not pointing to this server, fix DNS config or nginx configuration"
+	echo
+	verify_error=1
+    fi
+}
+
+function verify_restore()
+{
+
+    verify_dns_config
+
+    echo
+    if [ $verify_error -eq 1 ]; then
+       echo "  [ WARNING ] website restore successfully, with minor issues ( Manually fix these issues ) ( $DOMAIN )"
+    else
+       echo "  [ SUCCESS ] website restore successfully ( $DOMAIN )"
+    fi
+    echo
+}
+
+
+function main()
+{
+    get_current_dir
+    import_config
+    set_source_path
+    check_whether_webroot_dir_inside_source_dir
+    empty_config_check
+    remove_trailing_slash
+    print_config
+    get_abs_path_website_root
+    db_empty_check
+    dir_empty_check
+    importe_database
+    importe_code
+    verify_restore
+}
+
+# Call Main Function
+main
+
+
