@@ -3,7 +3,7 @@
 # restore a website from from backup
 #
 #		Author	: Viki (a) Vignesh Natarajan 
-#		Contact	: vikilabs.org
+#		Contact	: vikiworks.io
 #		Licence : MIT
 
 TOOL_NAME="backupNrestore"
