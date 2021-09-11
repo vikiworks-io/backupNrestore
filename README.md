@@ -22,3 +22,14 @@ Utility to backup and restore a webite. This utility can backup `any website wit
   [ This script will restore the website, Make sure db, dns and ssl certificate are configured before restoring ]
 
 
+## Note
+
+   1. Wordpress DB Configuration Location:
+   
+      - wp-config.php
+ 
+ 
+   2. OpenCart DB Configuration Location:
+
+      - 
+
