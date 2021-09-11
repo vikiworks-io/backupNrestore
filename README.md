@@ -31,5 +31,6 @@ Utility to backup and restore a webite. This utility can backup `any website wit
  
    2. OpenCart DB Configuration Location:
 
-      - 
+      - admin/config.php
+      - config.php
 
