@@ -39,19 +39,19 @@ function is_db_empty()
 
 function db_empty_check()
 {
-	if [ -n $DB1_NAME ]; then
+	if [ ! -z $DB1_NAME ]; then
 	    is_db_empty  $DB1_NAME $DB1_USERNAME  $DB1_PASSWORD 
 	fi
 
-	if [ -n $DB2_NAME ]; then
+	if [ ! -z $DB2_NAME ]; then
 	    is_db_empty  $DB2_NAME $DB2_USERNAME  $DB2_PASSWORD 
 	fi
 
-	if [ -n $DB3_NAME ]; then
+	if [ ! -z $DB3_NAME ]; then
 	    is_db_empty  $DB3_NAME $DB3_USERNAME  $DB3_PASSWORD 
 	fi
 
-	if [ -n $DB4_NAME ]; then
+	if [ ! -z $DB4_NAME ]; then
 	    is_db_empty  $DB4_NAME $DB4_USERNAME  $DB4_PASSWORD 
 	fi
 }
@@ -72,7 +72,7 @@ function dir_empty_check()
 function config_mismatch_check(){
     OLD=$1
     NEW=$2
-    if [ "$OLD" = "$NEW" ]; then
+    if [ "$OLD" != "$NEW" ]; then
 	echo "[ WARNING ] manually search and replace the following string,"
         echo
 	echo "    [ $OLD -> $NEW ]"
@@ -145,6 +145,12 @@ function import_config()
         echo "  [ ERROR ] Restore Failed, config file missing ( $CURRENT_DIR/config.sh )"
         exit 1
     fi
+
+    LOG_FILE="/tmp/backup.${DOMAIN}.log"
+    echo
+    echo "  Log File : $LOG_FILE"
+    echo
+
 
     verify_config
 
@@ -237,8 +243,8 @@ function print_config()
     [ ! -z $DB3_USERNAME ] && 	{ echo "  DB USERNAME      (3) : $DB3_USERNAME"; }
     [ ! -z $DB4_USERNAME ] && 	{ echo "  DB USERNAME      (4) : $DB4_USERNAME"; }
      
-    echo "  Backup Label      : $BACKUP_LABEL"
-    echo "  Backup File       : ${BACKUP_LABEL}.tar.gz"
+    #echo "  Backup Label      : $BACKUP_LABEL"
+    #echo "  Backup File       : ${BACKUP_LABEL}.tar.gz"
     echo 
 }
 
@@ -257,10 +263,10 @@ function import_db(){
 	DB_DUMP=$4
 	
 	if [[ -z $MYSQL_ADMIN_USERNAME ]]; then
-		mysql -u$DB_USER  -p$DB_PASS $DB_NAME < $DB_DUMP
+		mysql -u$DB_USER  -p$DB_PASS $DB_NAME < $DB_DUMP 2>/dev/null 1>/dev/null
 		[ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] Database Import Failed ( DB_NAME : $DB_NAME) "; exit 1; }
 	else
-		mysql -u$MYSQL_ADMIN_USERNAME  -p$MYSQL_ADMIN_PASSWORD $DB_NAME < $DB_DUMP
+		mysql -u$MYSQL_ADMIN_USERNAME  -p$MYSQL_ADMIN_PASSWORD $DB_NAME < $DB_DUMP 2>/dev/null 1>/dev/null
 		[ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] Database Import Failed ( DB_NAME : $DB_NAME) "; exit 1; }
 	fi
 
@@ -271,19 +277,19 @@ function importe_database()
 {
     cd $SOURCE_PATH
 
-    if [ -n $DB1_NAME ]; then
+    if [ ! -z $DB1_NAME ]; then
     import_db $DB1_NAME $DB1_USERNAME $DB1_PASSWORD "db/${DB1_NAME}.sql"
     fi
 
-    if [ -n $DB2_NAME ]; then
+    if [ ! -z $DB2_NAME ]; then
     import_db $DB2_NAME $DB2_USERNAME $DB2_PASSWORD "db/${DB2_NAME}.sql"
     fi
     
-    if [ -n $DB3_NAME ]; then
+    if [ ! -z $DB3_NAME ]; then
     import_db $DB3_NAME $DB3_USERNAME $DB3_PASSWORD "db/${DB3_NAME}.sql"
     fi    
     
-    if [ -n $DB4_NAME ]; then
+    if [ ! -z $DB4_NAME ]; then
     import_db $DB4_NAME $DB4_USERNAME $DB4_PASSWORD "db/${DB4_NAME}.sql"
     fi
 }
@@ -294,6 +300,12 @@ function importe_code()
 
     cp -arf code/. ${WEBSITE_ROOT_DIR}/
     [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] Website copy failed"; exit 1; }
+}
+
+function update_backupNrestore_tool(){
+    cd $SOURCE_PATH
+    cp -arf $TOOL_NAME ${WEBSITE_ROOT_DIR}/
+    [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] ( $TOOL_NAME ) copy failed"; exit 1; }
 }
 
 function verify_dns_config()
@@ -338,6 +350,7 @@ function main()
     dir_empty_check
     importe_database
     importe_code
+    update_backupNrestore_tool
     verify_restore
 }
 

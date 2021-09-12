@@ -3,13 +3,14 @@
 ################################### DOMAIN DETAILS ######################################
 # Keep all config values in single quotes unless specified otherwise
 # enter the website address
-DOMAIN="test.org"
+#DOMAIN='example.com'
+DOMAIN=''
 
 ################################### WEBSITE ROOT PATH ###################################
 
 # website root directory ( don't keep / at the end)
 # Do not use quotes
-
+#WEBSITE_ROOT_DIR=/home/www/html
 WEBSITE_ROOT_DIR=/home/www
 
 ################################### BACKUP PATH  ########################################
@@ -24,9 +25,9 @@ BACKUP_DIR=/home/backup
 # Keep the password inside single quotes 
 # ( Do not use double quotes )
 
-DB1_NAME="DB_NEW"
-DB1_USERNAME="db_u"
-DB1_PASSWORD='DBad'
+DB1_NAME=''
+DB1_USERNAME=''
+DB1_PASSWORD=''
 
 DB2_NAME=''
 DB2_USERNAME=''
