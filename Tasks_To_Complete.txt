@@ -1,0 +1,6 @@
+- Create DB if not exist ( error if no permission to create )
+- Create DB user if not exist
+- Create WebsiteRoot folder if not exist
+- Check both DB and Website Root Empty before importing code or db
+- Display help command to clear DB ( if it is not empty )
+- Display help command to clear Website Root ( if it is not empty )
