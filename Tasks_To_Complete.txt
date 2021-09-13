@@ -4,3 +4,4 @@
 - Check both DB and Website Root Empty before importing code or db
 - Display help command to clear DB ( if it is not empty )
 - Display help command to clear Website Root ( if it is not empty )
+- Change website root owner to chown www-data:www-data /var/www/html -R
