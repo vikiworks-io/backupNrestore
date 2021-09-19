@@ -169,9 +169,9 @@ function db_access_check()
 {
 
     if [[ -z $MYSQL_ADMIN_USERNAME ]]; then
-        table_count=$(mysql -u$DB1_USERNAME -p$DB1_PASSWORD -h $DB_HOST -P $DB_PORT $DB1_NAME -e "SHOW TABLES;" | wc -l)
+        table_count=$(mysql -u$DB1_USERNAME -p$DB1_PASSWORD -h $DB_HOST -P $DB_PORT $DB1_NAME -e "SHOW TABLES;" 2>/dev/null | wc -l)
     else
-        table_count=$(mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT $DB1_NAME -e "SHOW TABLES;" | wc -l)
+        table_count=$(mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT $DB1_NAME -e "SHOW TABLES;" 2>/dev/null | wc -l)
     fi
 
     if [ $? -ne 0 ];then
@@ -216,10 +216,10 @@ function export_db(){
 	echo "  exporting DB ( $DB_NAME )"
 	
     	if [[ -z $MYSQL_ADMIN_USERNAME ]]; then
-        	mysqldump -u$DB_USER  -p$DB_PASS $DB_NAME > $OUT_FILE
+        	mysqldump -u$DB_USER  -p$DB_PASS $DB_NAME > $OUT_FILE 2>/dev/null
     		[ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " >> $LOG_FILE; exit 1; }
     	else
-        	mysqldump -u$MYSQL_ADMIN_USERNAME  -p$MYSQL_ADMIN_PASSWORD $DB_NAME > $OUT_FILE
+        	mysqldump -u$MYSQL_ADMIN_USERNAME  -p$MYSQL_ADMIN_PASSWORD $DB_NAME > $OUT_FILE 2>/dev/null
     		[ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " >> $LOG_FILE; exit 1; }
     	fi
 
