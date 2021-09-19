@@ -2,9 +2,14 @@
 
 Utility to backup and restore a webite. This utility can backup `any website with maximum of 4 databases.
 
+## Quick Install 
+
+	wget https://github.com/vikiworks-io/website_backupNrestore/blob/master/tarball/backupNrestore.tar.gz?raw=true -O script.tar.gz; tar -zxvf script.tar.gz;rm script.tar.gz; cd backupNrestore;
+
+
 ## Backup website
 
-  - cd backupNRestore
+  - cd src (or) cd backupNRestore
   - feed your website configuration in config.sh
   - ./backup.sh 
     [ The backed up website will be compressed and stored as .tar.gz ]
