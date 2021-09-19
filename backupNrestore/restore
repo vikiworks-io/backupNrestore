@@ -14,25 +14,75 @@ function get_current_dir()
     CURRENT_DIR=`pwd -P`
 }
 
+function create_db_if_not_exist(){
+    DB_NAME=$1
+    echo "Creating DB if not exist ( $DB_NAME )"
+
+    if [[ -z $MYSQL_ADMIN_USERNAME ]]; then
+        echo "[ error ] You don't have permission to create DB, Manually create DB using phpMyAdmin and try again"
+        exit 1
+    fi
+
+    mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "CREATE DATABASE IF NOT EXISTS $DB_NAME;" #2>/dev/null 1>/dev/null 
+}
+
+function create_db_user_if_not_exist(){
+    DB_NAME=$1
+    DB_USER=$2
+    DB_PASS=$3
+
+    echo "Creating DB USER if not exist ( $DB_USER )"
+
+    if [[ -z $MYSQL_ADMIN_USERNAME ]]; then
+        echo "[ error ] You don't have permission to create DB, Manually create DB using phpMyAdmin and try again"
+        exit 1
+    fi
+
+    mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "CREATE USER '$DB_USER'@'$DB_HOST' IDENTIFIED BY '$DB_PASS';" #2>/dev/null 1>/dev/null
+
+    echo "update db password"
+    mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "SET PASSWORD FOR '$DB_USER'@'$DB_HOST' = PASSWORD('$DB_PASS');" #2>/dev/null 1>/dev/null
+    
+    echo "grand db privileges"
+    mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '$DB_USER'@'$DB_HOST';" #2>/dev/null 1>/dev/null
+    #mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '$DB_USER'@'$DB_HOST' WITH GRANT OPTION;" #2>/dev/null 1>/dev/null
+    #mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT $DB_NAME -e "GRANT ALL PRIVILEGES TO '$DB_USER'@'$DB_HOST';" #2>/dev/null 1>/dev/null
+    #mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'$DB_HOST';" #2>/dev/null 1>/dev/null
+    #mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, INDEX, DROP, ALTER, CREATE TEMPORARY TABLES, LOCK TABLES ON ${DB_NAME}.* TO '$DB_USER'@'$DB_HOST';" #2>/dev/null 1>/dev/null
+}
+
 function is_db_empty()
 {
     DB_NAME=$1
     DB_USER=$2
     DB_PASS=$3
+    CMD_STATUS=1
 
     if [[ -z $MYSQL_ADMIN_USERNAME ]]; then
         table_count=$(mysql -u$DB_USER -p$DB_PASS -h $DB_HOST -P $DB_PORT $DB_NAME -e "SHOW TABLES;" | wc -l)
+        mysql -u$DB_USER -p$DB_PASS -h $DB_HOST -P $DB_PORT $DB_NAME -e "SHOW TABLES;" 1> /dev/null 2> /dev/null
+        CMD_STATUS=$?
     else
         table_count=$(mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT $DB_NAME -e "SHOW TABLES;" | wc -l)
+        mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT $DB_NAME -e "SHOW TABLES;" 1> /dev/null 2> /dev/null
+        CMD_STATUS=$?
     fi
 
-    if [ $table_count -gt 0 ];then
-        echo "  [ ERROR ] [ ${LINENO} ] DB is not empty ( table_count : $table_count ), truncate database before restore"
-        echo
-        echo "     -> $DB_NAME"
-        echo
-        echo
-        exit 1
+    if [ $CMD_STATUS -ne 0 ]; then
+        echo "info1: probably db ($DB_NAME) doesn't exist"
+        echo "info2: probably db_user ($DB_USER) doesn't exist"
+        echo "info3: probably db_password ($DB_PASS) is wrong"
+        create_db_if_not_exist $DB_NAME
+        create_db_user_if_not_exist $DB_NAME $DB_USER $DB_PASS
+    else
+        if [ $table_count -gt 0 ];then
+            echo "  [ ERROR ] [ ${LINENO} ] DB is not empty ( table_count : $table_count ), truncate database before restore"
+            echo
+            echo "     -> $DB_NAME"
+            echo
+            echo
+            exit 1
+        fi
     fi
 
 }
@@ -261,12 +311,20 @@ function import_db(){
 	DB_USER=$2
 	DB_PASS=$3
 	DB_DUMP=$4
-	
+    cd $SOURCE_PATH
+
+    ls $DB_DUMP
+
+    if [ $? -ne 0 ]; then
+        echo "error: DB dump file missing ($SOURCE_PATH/$DB_DUMP )"
+        exit 1
+    fi
+
 	if [[ -z $MYSQL_ADMIN_USERNAME ]]; then
-		mysql -u$DB_USER  -p$DB_PASS $DB_NAME < $DB_DUMP 2>/dev/null 1>/dev/null
+		mysql -u$DB_USER  -p$DB_PASS -h $DB_HOST  -P $DB_PORT $DB_NAME < $DB_DUMP 2>/dev/null 1>/dev/null
 		[ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] Database Import Failed ( DB_NAME : $DB_NAME) "; exit 1; }
 	else
-		mysql -u$MYSQL_ADMIN_USERNAME  -p$MYSQL_ADMIN_PASSWORD $DB_NAME < $DB_DUMP 2>/dev/null 1>/dev/null
+		mysql -u$MYSQL_ADMIN_USERNAME  -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT $DB_NAME < $DB_DUMP 2>/dev/null 1>/dev/null
 		[ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] Database Import Failed ( DB_NAME : $DB_NAME) "; exit 1; }
 	fi
 
@@ -298,14 +356,24 @@ function importe_code()
 {
     cd $SOURCE_PATH
 
-    cp -arf code/. ${WEBSITE_ROOT_DIR}/
-    [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] Website copy failed"; exit 1; }
+    cp -arf code/. ${WEBSITE_ROOT_DIR}/ 2>/dev/null 1>/dev/null
+    if [ $? -ne 0 ]; then
+        #some system doesn't support -a option
+        cp -rf code/. ${WEBSITE_ROOT_DIR}/
+        [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] Website copy failed"; exit 1; }
+        cp -rf code/.htaccess ${WEBSITE_ROOT_DIR}/
+        cp -rf code/.* ${WEBSITE_ROOT_DIR}/
+    fi
 }
 
 function update_backupNrestore_tool(){
     cd $SOURCE_PATH
-    cp -arf $TOOL_NAME ${WEBSITE_ROOT_DIR}/
-    [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] ( $TOOL_NAME ) copy failed"; exit 1; }
+    cp -arf $TOOL_NAME ${WEBSITE_ROOT_DIR}/ 2>/dev/null 1>/dev/null
+    if [ $? -ne 0 ]; then
+        #some system doesn't support -a option
+        cp -rf $TOOL_NAME ${WEBSITE_ROOT_DIR}/
+        [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] ( $TOOL_NAME ) copy failed"; exit 1; }
+    fi
 }
 
 function verify_dns_config()
@@ -315,7 +383,7 @@ function verify_dns_config()
 
     if [ $? -ne 0 ]; then
 	echo 
-	echo "[ WARNING! ] Domain name ( $DOMAIN ) is not pointing to this server, fix DNS config or nginx configuration"
+	echo "[ WARNING! ] Probably domain name ( $DOMAIN ) is not pointing to this server, fix DNS config or nginx configuration"
 	echo
 	verify_error=1
     fi
@@ -346,8 +414,8 @@ function main()
     remove_trailing_slash
     print_config
     get_abs_path_website_root
-    db_empty_check
     dir_empty_check
+    db_empty_check
     importe_database
     importe_code
     update_backupNrestore_tool
