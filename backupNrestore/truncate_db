@@ -1,0 +1,87 @@
+#!/bin/bash
+# truncate db | delete all tables inside a database
+#
+#		Author	: Viki (a) Vignesh Natarajan 
+#		Contact	: vikiworks.io
+#		Licence : MIT
+
+
+
+DB_HOST="$1"
+DB_PORT="$2"
+DB_NAME="$3"
+DB_USER="$4"
+DB_PASS="$5"
+ARG_COUNT=$#
+TABLE_LIST=""
+flag=0
+
+function init_commands(){
+    C_GREP=$(which grep)
+    [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] Command doesn't exist ( grep ) "; exit 1; }
+
+    C_AWK=$(which awk)
+    [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] Command doesn't exist ( awk ) "; exit 1; }
+ 
+    C_MYSQL=$(which mysql)
+    [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] Command doesn't exist ( mysql ) "; exit 1; }
+}
+
+function get_db_table_list(){
+    $C_MYSQL -h $DB_HOST -P $DB_PORT -u $DB_USER -p$DB_PASS $DB_NAME -e 'SHOW TABLES;' 2>/dev/null  1>/dev/null 
+    [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] unable to execute mysql query "; exit 1; }
+
+    TABLE_LIST=$($C_MYSQL -h $DB_HOST -P $DB_PORT -u $DB_USER -p$DB_PASS $DB_NAME -e 'SHOW TABLES;' 2>/dev/null | $C_AWK '{ print $1}' | $C_GREP -v '^Tables' )
+}
+
+function check_arguments(){
+    if [ $ARG_COUNT -ne 5 ]
+    then
+        echo
+        echo "error: usage"
+        echo
+        echo "Usage: $0 <db_host> <db_port> <db_name> <db_username> <db_password>"
+        echo
+        exit 1
+    fi
+}
+
+function delete_tables(){
+    for TABLE in $TABLE_LIST
+    do
+        echo "    DROPPING TABLE [ $TABLE ] FROM DB [ $DB_NAME ]"
+        $C_MYSQL -u$DB_USER -p$DB_PASS $DB_NAME -h $DB_HOST -P $DB_PORT -e "DROP TABLE $TABLE" 2>/dev/null 1>/dev/null
+    done
+}
+
+function retry_delete_tables(){
+    echo "   DELETING DB TABLES ( $DB_NAME )"
+    echo
+    flag=0
+    for i in {0..50}
+    do
+        # echo $i
+        get_db_table_list
+        delete_tables
+        if [ -z "$TABLE_LIST" ]; then
+            flag=1
+        fi
+    done
+}
+
+
+echo
+check_arguments
+init_commands
+
+retry_delete_tables
+
+echo
+if [ $flag -eq 1 ]; then
+    echo "   ALL TABLES ARE TRUNCATED "
+else
+    echo "   [ WARNING ] TRY RUNNING THE COMMAND AGAIN ( FEW TABLES MAY NOT BE TRUNCATED )"
+    exit 1
+fi
+
+echo

@@ -1,7 +1,7 @@
 - Create DB if not exist ( error if no permission to create )		[ DONE ] 
 - Create DB user if not exist										[ DONE ]
-- Create WebsiteRoot folder if not exist							
+- Create WebsiteRoot folder if not exist						    [ DONE ]	
 - Check both DB and Website Root Empty before importing code or db	[ DONE ]
-- Display help command to clear DB ( if it is not empty )
-- Display help command to clear Website Root ( if it is not empty )
-- Change website root owner to chown www-data:www-data /var/www/html -R
+- Change website root owner to chown www-data:www-data /var/www/html -R	[ DONE ]
+- Display help command to clear DB ( if it is not empty )			[ DONE ]
+- Display help command to clear Website Root ( if it is not empty ) [ DONE ]

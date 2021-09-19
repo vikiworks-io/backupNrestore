@@ -23,7 +23,7 @@ function create_db_if_not_exist(){
         exit 1
     fi
 
-    mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "CREATE DATABASE IF NOT EXISTS $DB_NAME;" #2>/dev/null 1>/dev/null 
+    mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "CREATE DATABASE IF NOT EXISTS $DB_NAME;" 2>/dev/null 1>/dev/null 
 }
 
 function create_db_user_if_not_exist(){
@@ -38,17 +38,17 @@ function create_db_user_if_not_exist(){
         exit 1
     fi
 
-    mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "CREATE USER '$DB_USER'@'$DB_HOST' IDENTIFIED BY '$DB_PASS';" #2>/dev/null 1>/dev/null
+    mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "CREATE USER '$DB_USER'@'$DB_HOST' IDENTIFIED BY '$DB_PASS';" 2>/dev/null 1>/dev/null
 
     echo "update db password"
-    mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "SET PASSWORD FOR '$DB_USER'@'$DB_HOST' = PASSWORD('$DB_PASS');" #2>/dev/null 1>/dev/null
+    mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "SET PASSWORD FOR '$DB_USER'@'$DB_HOST' = PASSWORD('$DB_PASS');" 2>/dev/null 1>/dev/null
     
     echo "grand db privileges"
-    mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '$DB_USER'@'$DB_HOST';" #2>/dev/null 1>/dev/null
-    #mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '$DB_USER'@'$DB_HOST' WITH GRANT OPTION;" #2>/dev/null 1>/dev/null
-    #mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT $DB_NAME -e "GRANT ALL PRIVILEGES TO '$DB_USER'@'$DB_HOST';" #2>/dev/null 1>/dev/null
-    #mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'$DB_HOST';" #2>/dev/null 1>/dev/null
-    #mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, INDEX, DROP, ALTER, CREATE TEMPORARY TABLES, LOCK TABLES ON ${DB_NAME}.* TO '$DB_USER'@'$DB_HOST';" #2>/dev/null 1>/dev/null
+    mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '$DB_USER'@'$DB_HOST';" 2>/dev/null 1>/dev/null
+    #mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '$DB_USER'@'$DB_HOST' WITH GRANT OPTION;" 2>/dev/null 1>/dev/null
+    #mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT $DB_NAME -e "GRANT ALL PRIVILEGES TO '$DB_USER'@'$DB_HOST';" 2>/dev/null 1>/dev/null
+    #mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'$DB_HOST';" 2>/dev/null 1>/dev/null
+    #mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, INDEX, DROP, ALTER, CREATE TEMPORARY TABLES, LOCK TABLES ON ${DB_NAME}.* TO '$DB_USER'@'$DB_HOST';" 2>/dev/null 1>/dev/null
 }
 
 function is_db_empty()
@@ -59,11 +59,11 @@ function is_db_empty()
     CMD_STATUS=1
 
     if [[ -z $MYSQL_ADMIN_USERNAME ]]; then
-        table_count=$(mysql -u$DB_USER -p$DB_PASS -h $DB_HOST -P $DB_PORT $DB_NAME -e "SHOW TABLES;" | wc -l)
+        table_count=$(mysql -u$DB_USER -p$DB_PASS -h $DB_HOST -P $DB_PORT $DB_NAME -e "SHOW TABLES;" 2> /dev/null | wc -l)
         mysql -u$DB_USER -p$DB_PASS -h $DB_HOST -P $DB_PORT $DB_NAME -e "SHOW TABLES;" 1> /dev/null 2> /dev/null
         CMD_STATUS=$?
     else
-        table_count=$(mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT $DB_NAME -e "SHOW TABLES;" | wc -l)
+        table_count=$(mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT $DB_NAME -e "SHOW TABLES;" 2> /dev/null | wc -l)
         mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT $DB_NAME -e "SHOW TABLES;" 1> /dev/null 2> /dev/null
         CMD_STATUS=$?
     fi
@@ -76,10 +76,11 @@ function is_db_empty()
         create_db_user_if_not_exist $DB_NAME $DB_USER $DB_PASS
     else
         if [ $table_count -gt 0 ];then
-            echo "  [ ERROR ] [ ${LINENO} ] DB is not empty ( table_count : $table_count ), truncate database before restore"
+            echo "  [ ERROR ] [ ${LINENO} ] DB is not empty ( $DB_NAME ) ( table_count : $table_count ), truncate database before restore"
             echo
-            echo "     -> $DB_NAME"
+            echo "  Help: Truncate Database"
             echo
+            echo "  ./truncate_db '$DB_HOST' '$DB_PORT' '$DB_NAME' '$DB_USER' '$DB_PASS'"
             echo
             exit 1
         fi
@@ -106,15 +107,22 @@ function db_empty_check()
 	fi
 }
 
+function create_website_root_if_not_exist(){
+    mkdir -p ${WEBSITE_ROOT_DIR} 2> /dev/null 1> /dev/null
+}
+
 function dir_empty_check()
 {
+
     file_count=`ls ${WEBSITE_ROOT_DIR}/ | wc -l`
     if [ $file_count -gt 0 ];then
-        echo "  [ ERROR ] [ ${LINENO} ] website root directory is not empty, clear all files before restoring"
+        echo "  [ ERROR ] [ ${LINENO} ] website root directory ( $WEBSITE_ROOT_DIR ) is not empty, clear all files before restoring"
         echo
-        echo "      -> $WEBSITE_ROOT_DIR"
+        echo "  Help: Clear all files from website root"
         echo
+        echo "  rm -rf $WEBSITE_ROOT_DIR/*"
         echo
+
         exit 1
     fi
 }
@@ -123,15 +131,15 @@ function config_mismatch_check(){
     OLD=$1
     NEW=$2
     if [ "$OLD" != "$NEW" ]; then
-	echo "[ WARNING ] manually search and replace the following string,"
+	echo "  [ WARNING ] manually search and replace the following string,"
         echo
 	echo "    [ $OLD -> $NEW ]"
         echo
-        echo "Location to change: "
+        echo "    Location to change: "
         echo "    "
-        echo "    -> $SOURCE_PATH/db"
-        echo "    -> $SOURCE_PATH/code"
-        echo "    -> $CURRENT_DIR/.config_old.sh"
+        echo "        -> $SOURCE_PATH/db"
+        echo "        -> $SOURCE_PATH/code"
+        echo "        -> $CURRENT_DIR/.config_old.sh"
         echo "    "
 	config_mismatch=1
     fi
@@ -313,12 +321,13 @@ function import_db(){
 	DB_DUMP=$4
     cd $SOURCE_PATH
 
-    ls $DB_DUMP
+    ls $DB_DUMP 2>/dev/null 1>/dev/null
 
     if [ $? -ne 0 ]; then
-        echo "error: DB dump file missing ($SOURCE_PATH/$DB_DUMP )"
+        echo "    error: DB dump file missing ($SOURCE_PATH/$DB_DUMP )"
         exit 1
     fi
+
 
 	if [[ -z $MYSQL_ADMIN_USERNAME ]]; then
 		mysql -u$DB_USER  -p$DB_PASS -h $DB_HOST  -P $DB_PORT $DB_NAME < $DB_DUMP 2>/dev/null 1>/dev/null
@@ -383,7 +392,7 @@ function verify_dns_config()
 
     if [ $? -ne 0 ]; then
 	echo 
-	echo "[ WARNING! ] Probably domain name ( $DOMAIN ) is not pointing to this server, fix DNS config or nginx configuration"
+	echo "  [ WARNING! ] Probably domain name ( $DOMAIN ) is not pointing to this server, fix DNS config or nginx configuration"
 	echo
 	verify_error=1
     fi
@@ -403,6 +412,9 @@ function verify_restore()
     echo
 }
 
+function configure_ownership(){
+    chown www-data:www-data ${WEBSITE_ROOT_DIR} -R 2>/dev/null 1>/dev/null
+}
 
 function main()
 {
@@ -414,11 +426,13 @@ function main()
     remove_trailing_slash
     print_config
     get_abs_path_website_root
+    create_website_root_if_not_exist
     dir_empty_check
     db_empty_check
     importe_database
     importe_code
     update_backupNrestore_tool
+    configure_ownership
     verify_restore
 }
 
