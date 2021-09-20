@@ -1,4 +1,8 @@
-1. Support for DB_Password with $ sign. Example 'Kt$123'
-2. Support for DB Password with space character
-3. Support for Website root path with space character. Example "/home/web users/html"
-4. Support for DB Name with space character
+The following tasks has to be implemented soon,
+
+	1. Support for DB_Password with $ sign. Example 'Kt$123'
+	2. Support for DB Password with space character
+	3. Support for Website root path with space character. Example "/home/web users/html"
+	4. Support for DB Name with space character
+
+
