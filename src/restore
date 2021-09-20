@@ -246,6 +246,27 @@ function check_whether_webroot_dir_inside_source_dir()
     fi  
 } 
 
+function exit_if_space_exist(){
+    STR="$1"
+    MESSAGE="$2"
+    if [[ "$STR" == *" "* ]]; then
+        echo "  error: ( $MESSAGE ) - ( "$STR" ) "
+        echo
+        exit 1
+    fi
+}
+
+function exit_if_dollar_exist(){
+    STR="$1"
+    MESSAGE="$2"
+    if [[ "$STR" == *"$"* ]]; then
+        echo "  error: ( $MESSAGE ) - ( "$STR" ) "
+        echo
+        exit 1
+    fi
+}
+
+
 function empty_config_check()
 {
     config_error=0
@@ -267,6 +288,48 @@ function empty_config_check()
         echo
         exit 1
    fi
+
+   exit_if_space_exist "$CURRENT_DIR"       "Space character is not supported in CURRENT_DIR"
+   exit_if_space_exist "$WEBSITE_ROOT_DIR"  "Space character is not supported in WEBSITE_ROOT_DIR"
+   exit_if_space_exist "$DOMAIN"            "Space character is not supported in DOMAIN"
+   exit_if_space_exist "$DB1_NAME"          "Space character is not supported in DB1_NAME"
+   exit_if_space_exist "$DB2_NAME"          "Space character is not supported in DB2_NAME"
+   exit_if_space_exist "$DB3_NAME"          "Space character is not supported in DB3_NAME"
+   exit_if_space_exist "$DB4_NAME"          "Space character is not supported in DB4_NAME"
+   exit_if_space_exist "$DB1_USERNAME"      "Space character is not supported in DB1_USERNAME"
+   exit_if_space_exist "$DB2_USERNAME"      "Space character is not supported in DB2_USERNAME"
+   exit_if_space_exist "$DB3_USERNAME"      "Space character is not supported in DB3_USERNAME"
+   exit_if_space_exist "$DB4_USERNAME"      "Space character is not supported in DB4_USERNAME"
+   exit_if_space_exist "$DB1_PASSWORD"      "Space character is not supported in DB1_PASSWORD"
+   exit_if_space_exist "$DB2_PASSWORD"      "Space character is not supported in DB2_PASSWORD"
+   exit_if_space_exist "$DB3_PASSWORD"      "Space character is not supported in DB3_PASSWORD"
+   exit_if_space_exist "$DB4_PASSWORD"      "Space character is not supported in DB4_PASSWORD"
+   exit_if_space_exist "$DB_HOST"           "Space character is not supported in DB_HOST"
+   exit_if_space_exist "$DB_PORT"           "Space character is not supported in DB_PORT"
+   exit_if_space_exist "$BACKUP_DIR"        "Space character is not supported in BACKUP_DIR"
+   exit_if_space_exist "$MYSQL_ADMIN_USERNAME"      "Space character is not supported in MYSQL_ADMIN_USERNAME"
+   exit_if_space_exist "$MYSQL_ADMIN_PASSWORD"      "Space character is not supported in MYSQL_ADMIN_PASSWORD"
+
+   exit_if_dollar_exist "$CURRENT_DIR"       "Space character is not supported in CURRENT_DIR"
+   exit_if_dollar_exist "$WEBSITE_ROOT_DIR"  "Dollar character is not supported in WEBSITE_ROOT_DIR"
+   exit_if_dollar_exist "$DOMAIN"            "Dollar character is not supported in DOMAIN"
+   exit_if_dollar_exist "$DB1_NAME"          "Dollar character is not supported in DB1_NAME"
+   exit_if_dollar_exist "$DB2_NAME"          "Dollar character is not supported in DB2_NAME"
+   exit_if_dollar_exist "$DB3_NAME"          "Dollar character is not supported in DB3_NAME"
+   exit_if_dollar_exist "$DB4_NAME"          "Dollar character is not supported in DB4_NAME"
+   exit_if_dollar_exist "$DB1_USERNAME"      "Dollar character is not supported in DB1_USERNAME"
+   exit_if_dollar_exist "$DB2_USERNAME"      "Dollar character is not supported in DB2_USERNAME"
+   exit_if_dollar_exist "$DB3_USERNAME"      "Dollar character is not supported in DB3_USERNAME"
+   exit_if_dollar_exist "$DB4_USERNAME"      "Dollar character is not supported in DB4_USERNAME"
+   exit_if_dollar_exist "$DB1_PASSWORD"      "Dollar character is not supported in DB1_PASSWORD"
+   exit_if_dollar_exist "$DB2_PASSWORD"      "Dollar character is not supported in DB2_PASSWORD"
+   exit_if_dollar_exist "$DB3_PASSWORD"      "Dollar character is not supported in DB3_PASSWORD"
+   exit_if_dollar_exist "$DB4_PASSWORD"      "Dollar character is not supported in DB4_PASSWORD"
+   exit_if_dollar_exist "$DB_HOST"           "Dollar character is not supported in DB_HOST"
+   exit_if_dollar_exist "$DB_PORT"           "Dollar character is not supported in DB_PORT"
+   exit_if_dollar_exist "$BACKUP_DIR"        "Dollar character is not supported in BACKUP_DIR"
+   exit_if_dollar_exist "$MYSQL_ADMIN_USERNAME"      "Dollar character is not supported in MYSQL_ADMIN_USERNAME"
+   exit_if_dollar_exist "$MYSQL_ADMIN_PASSWORD"      "Dollar character is not supported in MYSQL_ADMIN_PASSWORD"
 }
 
 function remove_trailing_slash()
