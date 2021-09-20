@@ -1,4 +1,14 @@
 #!/bin/bash
+################################## Characters which are not supported ###################
+
+Don't use these characters for db password, db name, website root path, etc
+
+	- Dollar Sign 	<$>
+	- Single Quotes <'>
+	- Double Quotes <"> 
+	- Space 		< >
+
+#########################################################################################
 
 ################################### DOMAIN DETAILS ######################################
 # Keep all config values in single quotes unless specified otherwise
@@ -9,16 +19,16 @@ DOMAIN=''
 ################################### WEBSITE ROOT PATH ###################################
 
 # website root directory ( don't keep / at the end)
-# Do not use quotes
-#WEBSITE_ROOT_DIR=/home/www/html
-WEBSITE_ROOT_DIR=/home/www
+# Use single quotes
+#WEBSITE_ROOT_DIR='/home/www/html'
+WEBSITE_ROOT_DIR='/home/www'
 
 ################################### BACKUP PATH  ########################################
 
 # website backup directory ( don't keep / at the end).
-# Do not use quotes
+# Use single quotes
 
-BACKUP_DIR=/home/backup
+BACKUP_DIR='/home/backup'
 
 ################################### DB CREDENTIALS ######################################
 

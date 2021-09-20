@@ -7,37 +7,37 @@ Utility to backup and restore a webite. This utility can backup `any website wit
 	wget https://github.com/vikiworks-io/website_backupNrestore/blob/master/tarball/backupNrestore.tar.gz?raw=true -O script.tar.gz; tar -zxvf script.tar.gz;rm script.tar.gz; cd backupNrestore;
 
 
-## Backup website
+## Backup website Steps
 
-  - cd src (or) cd backupNRestore
-  - feed your website configuration in config.sh
-  - ./backup.sh 
+  1. cd src (or) cd backupNRestore
+  2. feed your website configuration in config.sh
+  3. ./backup.sh 
     [ The backed up website will be compressed and stored as .tar.gz ]
     [ Ex: test.tar.gz ]
    
 
-## Restore website
+## Restore Website Steps
    
-  - locate the website backup file ( test.tar.gz )
-  - tar -zxvf test.tar.gz
-  - cd test
-  - cd backupNRestore
-  - ./restore
+  1. locate the website backup file ( test.tar.gz )
+  2. tar -zxvf test.tar.gz
+  3. cd test
+  4. cd backupNRestore
+  5. ./restore
 
   [ This script will restore the website, Make sure db, dns and ssl certificate are configured before restoring ]
 
 
-## Migrate Website
+## Migrate Website Steps 
 
-  - locate the website backup file ( test.tar.gz )
-  - tar -zxvf test.tar.gz
-  - cd test
-  - Search and replace "old domain name" 		-> "new domain name" 
-  - Search and replace "old website root path" 	-> "new website root path"
-  - Search and replace "old db credentials" 	-> "new db credentials"
-  - Update the configuration files backupNRestore/config.sh, backupNRestore/.config_old.sh
-  - cd backupNRestore 
-  - ./restore
+  1. locate the website backup file ( test.tar.gz )
+  2. tar -zxvf test.tar.gz
+  3. cd test
+  4. Search and replace "old domain name" 		-> "new domain name"  			( All files and folders, including hidden files )
+  5. Search and replace "old website root path" -> "new website root path"      ( All files and folders, including hidden files )
+  6. Search and replace "old db credentials" 	-> "new db credentials"         ( All files and folders, including hidden files )
+  7. Update the configuration files backupNRestore/config.sh, backupNRestore/.config_old.sh
+  8. cd backupNRestore 
+  9. ./restore
 
   [ This script will restore/migrate the website, Make sure db, dns and ssl certificate are configured before restoring ]
 

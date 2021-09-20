@@ -28,10 +28,10 @@ function init_commands(){
 }
 
 function get_db_table_list(){
-    $C_MYSQL -h $DB_HOST -P $DB_PORT -u $DB_USER -p$DB_PASS $DB_NAME -e 'SHOW TABLES;' 2>/dev/null  1>/dev/null 
+    $C_MYSQL -h "$DB_HOST" -P $DB_PORT -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" -e 'SHOW TABLES;' 2>/dev/null  1>/dev/null 
     [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] unable to execute mysql query "; exit 1; }
 
-    TABLE_LIST=$($C_MYSQL -h $DB_HOST -P $DB_PORT -u $DB_USER -p$DB_PASS $DB_NAME -e 'SHOW TABLES;' 2>/dev/null | $C_AWK '{ print $1}' | $C_GREP -v '^Tables' )
+    TABLE_LIST=$($C_MYSQL -h "$DB_HOST" -P $DB_PORT -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" -e 'SHOW TABLES;' 2>/dev/null | $C_AWK '{ print $1}' | $C_GREP -v '^Tables' )
 }
 
 function check_arguments(){
@@ -50,7 +50,7 @@ function delete_tables(){
     for TABLE in $TABLE_LIST
     do
         echo "    DROPPING TABLE [ $TABLE ] FROM DB [ $DB_NAME ]"
-        $C_MYSQL -u$DB_USER -p$DB_PASS $DB_NAME -h $DB_HOST -P $DB_PORT -e "DROP TABLE $TABLE" 2>/dev/null 1>/dev/null
+        $C_MYSQL -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" -h "$DB_HOST" -P $DB_PORT -e "DROP TABLE $TABLE" 2>/dev/null 1>/dev/null
     done
 }
 

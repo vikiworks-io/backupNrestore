@@ -27,11 +27,7 @@ function import_config()
 {
     cd $CURRENT_DIR
     source ./config.sh
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " >> $LOG_FILE; exit 1; }
-    LOG_FILE="/tmp/backup.${DOMAIN}.log"
-    echo
-    echo
-    echo "  Log File : $LOG_FILE"
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] "; exit 1; }
     echo
     echo
 }
@@ -69,7 +65,6 @@ function empty_config_check()
     [ -z $DB_PORT ] && { echo "  [ CONFIG ERROR ] :  DB_PORT" ; config_error=1; }
     [ -z $WEBSITE_ROOT_DIR ] && { echo "  [ CONFIG ERROR ] :  WEBSITE_ROOT_DIR" ; config_error=1; }
     [ -z $BACKUP_DIR ] && { echo "  [ CONFIG ERROR ] :  BACKUP_DIR" ; config_error=1; }
-    [[ -z $LOG_FILE ]] && { echo "  [ CONFIG ERROR ] :  LOG_FILE" ; config_error=1; }
 
     if [ $config_error -eq 1 ]; then
         echo
@@ -166,7 +161,7 @@ function create_backup_dir()
 function get_abs_path_backup_dir()
 {
     cd $BACKUP_DIR
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " >> $LOG_FILE; exit 1; }
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
     BACKUP_DIR=`pwd -P`
 }
 
@@ -180,7 +175,7 @@ function get_abs_path_web_root()
 function input_validation()
 {
     if [ "$WEBSITE_ROOT_DIR" = "$BACKUP_DIR" ]; then
-        echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] WEBSITE_ROOT_DIR and BACKUP_DIR should be different" >> $LOG_FILE
+        echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] WEBSITE_ROOT_DIR and BACKUP_DIR should be different"
         exit 1
     fi
 }
@@ -195,11 +190,11 @@ function create_backup_dir_with_timestamp()
 
     #create backup directory
     mkdir -p "$BACKUP_DIR/$BACKUP_LABEL"
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " >> $LOG_FILE; exit 1; }
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] "; exit 1; }
     mkdir -p "$BACKUP_DIR/$BACKUP_LABEL/code"
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " >> $LOG_FILE; exit 1; }
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] "; exit 1; }
     mkdir -p "$BACKUP_DIR/$BACKUP_LABEL/db"
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " >> $LOG_FILE; exit 1; }
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] "; exit 1; }
 
 }
 
@@ -261,29 +256,35 @@ function export_db(){
 	OUT_FILE=$4
 
 	if [ -z $DB_NAME ]; then
-		echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] DB NAME MISSING" >> $LOG_FILE; exit 1; 
+		echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] DB NAME MISSING" ; exit 1; 
 	fi
 
 	if [ -z $DB_USER ]; then
-		echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] DB USERNAME MISSING" >> $LOG_FILE; exit 1; 
+		echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] DB USERNAME MISSING" ; exit 1; 
 	fi
 
 	if [ -z $DB_PASS ]; then
-		echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] DB PASSWORD MISSING" >> $LOG_FILE; exit 1; 
+		echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] DB PASSWORD MISSING" ; exit 1; 
 	fi
 
 	if [ -z $OUT_FILE ]; then
-		echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] DB EXPORT OUTPUT FILE MISSING" >> $LOG_FILE; exit 1; 
+		echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] DB EXPORT OUTPUT FILE MISSING" ; exit 1; 
 	fi
 
 	echo "  exporting DB ( $DB_NAME )"
 	
-    	if [[ -z $MYSQL_ADMIN_USERNAME ]]; then
-        	mysqldump -u$DB_USER  -p$DB_PASS $DB_NAME > $OUT_FILE 2>/dev/null
-    		[ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " >> $LOG_FILE; exit 1; }
+    	if [[ -z "$MYSQL_ADMIN_USERNAME" ]]; then
+        	mysqldump -h "$DB_HOST" -P $DB_PORT -u"$DB_USER"  -p"$DB_PASS" "$DB_NAME" > $OUT_FILE  2>/dev/null  
+    		if [ $? -ne 0 ]; then 
+            mysqldump --column-statistics=0 "$DB_HOST" -P $DB_PORT -u"$DB_USER"  -p"$DB_PASS" "$DB_NAME" > $OUT_FILE  2>/dev/null
+            fi
+            [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
     	else
-        	mysqldump -u$MYSQL_ADMIN_USERNAME  -p$MYSQL_ADMIN_PASSWORD $DB_NAME > $OUT_FILE 2>/dev/null
-    		[ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " >> $LOG_FILE; exit 1; }
+        	mysqldump -h "$DB_HOST" -P $DB_PORT -u"$MYSQL_ADMIN_USERNAME"  -p"$MYSQL_ADMIN_PASSWORD" "$DB_NAME" > $OUT_FILE 2>/dev/null
+    		if [ $? -ne 0 ]; then 
+        	mysqldump --column-statistics=0  -h "$DB_HOST" -P $DB_PORT -u"$MYSQL_ADMIN_USERNAME" -p"$MYSQL_ADMIN_PASSWORD" "$DB_NAME" > $OUT_FILE 2>/dev/null
+            fi
+    		[ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
     	fi
 
 
@@ -313,8 +314,16 @@ function export_website_database()
 function export_website_data()
 {
     echo "  exporting website data ( $WEBSITE_ROOT_DIR/ )"
-    cp -arf $WEBSITE_ROOT_DIR/. $BACKUP_DIR/$BACKUP_LABEL/code/
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " >> $LOG_FILE; exit 1; }
+    cp -arf $WEBSITE_ROOT_DIR/. $BACKUP_DIR/$BACKUP_LABEL/code/ 2>/dev/null
+    if [ $? -ne 0 ]; then
+        #some system doesn't support -a option
+        cp -rf $WEBSITE_ROOT_DIR/. $BACKUP_DIR/$BACKUP_LABEL/code/ 2>/dev/null
+        [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] Website copy failed"; exit 1; }
+        cp -rf $WEBSITE_ROOT_DIR/.htaccess $BACKUP_DIR/$BACKUP_LABEL/code/ 2>/dev/null
+        cp -rf $WEBSITE_ROOT_DIR/*.* $BACKUP_DIR/$BACKUP_LABEL/code/ 2>/dev/null
+    fi
+
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
 }
 
 function clear_log_files()
@@ -329,7 +338,7 @@ function clear_log_files()
 
 }
 
-function clear_stale_files()
+function remove_unused_files_n_folders_from_backup()
 {
     cd $BACKUP_DIR/$BACKUP_LABEL/code/
 
@@ -338,44 +347,54 @@ function clear_stale_files()
         rm "$fname"
     done
 
-    echo "  ( status ) wordpress backup files are removed"
+    [ $? -eq 0 ] && { echo "( status ) wordpress backup files are removed from backup" ; }
+    
+    rm -rf $BACKUP_DIR/$BACKUP_LABEL/code/.git
+    [ $? -eq 0 ] && { echo "( status ) .git folder is removed from backup" ; }
 }
 
-function copy_restore_utils()
+function copy_restore_utils_to_backup_path()
 {
     cd $BACKUP_DIR/$BACKUP_LABEL/
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " >> $LOG_FILE; exit 1; }
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
 
     mkdir -p $TOOL_NAME
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " >> $LOG_FILE; exit 1; }
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
    
     cd $CURRENT_DIR
     cp -rf * $BACKUP_DIR/$BACKUP_LABEL/$TOOL_NAME/
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " >> $LOG_FILE; exit 1; }
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
     
     cp $CURRENT_DIR/config.sh $BACKUP_DIR/$BACKUP_LABEL/$TOOL_NAME/.config_old.sh
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " >> $LOG_FILE; exit 1; }
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
     
     cp $CURRENT_DIR/config.sh $BACKUP_DIR/$BACKUP_LABEL/$TOOL_NAME/
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " >> $LOG_FILE; exit 1; }
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
+}
+
+function remove_restore_utils_from_code_dir_on_backup_dir(){
+    cd $BACKUP_DIR/$BACKUP_LABEL/
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
+
+    #This tool is at two places, removing from code/backupNrestore. 
+    rm -rf code/$TOOL_NAME 2> /dev/null
 }
 
 # Compress website backup and create a tar.gz archive
 function generate_backup()
 {
     cd $BACKUP_DIR
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " >> $LOG_FILE; exit 1; }
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
 
     tar -czvf "${BACKUP_LABEL}.tar.gz" $BACKUP_LABEL 1> /dev/null
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " >> $LOG_FILE; exit 1; }
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
 
     #######################  remove $BACKUP_LABEL directory ###################
     rm -rf $BACKUP_LABEL
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " >> $LOG_FILE; exit 1; }
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
 
     echo
-    echo "  [ SUCCESS ] website backup ( $BACKUP_DIR/${BACKUP_LABEL}.tar.gz )"
-    echo "  [ SUCCESS ] website backup ( $BACKUP_DIR/${BACKUP_LABEL}.tar.gz )" >> $LOG_FILE
+    echo "  [ SUCCESS ] website backup ( $BACKUP_DIR/${BACKUP_LABEL}.tar.gz )" 
     echo
     echo "  WEBSITE BACKUP IS SUCCESSFUL"
     echo
@@ -401,8 +420,9 @@ function main()
     export_website_database
     export_website_data
     clear_log_files
-    clear_stale_files
-    copy_restore_utils
+    remove_unused_files_n_folders_from_backup
+    remove_restore_utils_from_code_dir_on_backup_dir
+    copy_restore_utils_to_backup_path
     generate_backup
 }
 

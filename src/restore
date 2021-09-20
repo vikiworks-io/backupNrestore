@@ -44,8 +44,8 @@ function create_db_user_if_not_exist(){
     mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "SET PASSWORD FOR '$DB_USER'@'$DB_HOST' = PASSWORD('$DB_PASS');" 2>/dev/null 1>/dev/null
     
     echo "grand db privileges"
-    mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '$DB_USER'@'$DB_HOST';" 2>/dev/null 1>/dev/null
-    #mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '$DB_USER'@'$DB_HOST' WITH GRANT OPTION;" 2>/dev/null 1>/dev/null
+    #mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '$DB_USER'@'$DB_HOST';" 2>/dev/null 1>/dev/null
+    mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '$DB_USER'@'$DB_HOST' WITH GRANT OPTION;" 2>/dev/null 1>/dev/null
     #mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT $DB_NAME -e "GRANT ALL PRIVILEGES TO '$DB_USER'@'$DB_HOST';" 2>/dev/null 1>/dev/null
     #mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'$DB_HOST';" 2>/dev/null 1>/dev/null
     #mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT -e "GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, INDEX, DROP, ALTER, CREATE TEMPORARY TABLES, LOCK TABLES ON ${DB_NAME}.* TO '$DB_USER'@'$DB_HOST';" 2>/dev/null 1>/dev/null
@@ -204,12 +204,6 @@ function import_config()
         exit 1
     fi
 
-    LOG_FILE="/tmp/backup.${DOMAIN}.log"
-    echo
-    echo "  Log File : $LOG_FILE"
-    echo
-
-
     verify_config
 
     if [ $config_mismatch -eq 1 ]; then
@@ -280,7 +274,6 @@ function empty_config_check()
     [ -z $DB_PORT ] && { echo "  [ CONFIG ERROR ] :  DB_PORT" ; config_error=1; }
     [ -z $WEBSITE_ROOT_DIR ] && { echo "  [ CONFIG ERROR ] :  WEBSITE_ROOT_DIR" ; config_error=1; }
     [ -z $BACKUP_DIR ] && { echo "  [ CONFIG ERROR ] :  BACKUP_DIR" ; config_error=1; }
-    [ -z $LOG_FILE ] && { echo "  [ CONFIG ERROR ] :  LOG_FILE" ; config_error=1; }
 
     if [ $config_error -eq 1 ]; then
         echo
@@ -434,7 +427,7 @@ function importe_code()
         cp -rf code/. ${WEBSITE_ROOT_DIR}/
         [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] Website copy failed"; exit 1; }
         cp -rf code/.htaccess ${WEBSITE_ROOT_DIR}/
-        cp -rf code/.* ${WEBSITE_ROOT_DIR}/
+        cp -rf code/*.* ${WEBSITE_ROOT_DIR}/
     fi
 }
 
