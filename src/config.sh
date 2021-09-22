@@ -1,13 +1,14 @@
 #!/bin/bash
 ################################## Characters which are not supported ###################
-
-Don't use these characters for db password, db name, website root path, etc
-
-	- Dollar Sign 	<$>
-	- Single Quotes <'>
-	- Double Quotes <"> 
-	- Space 		< >
-
+#
+#	Don't use these characters for db password, db name, website root path, etc
+#
+#	- Dollar Sign 	<$>
+#	- Single Quotes <'>
+#	- Double Quotes <"> 
+#	- Space 		< >
+#
+#
 #########################################################################################
 
 ################################### DOMAIN DETAILS ######################################
