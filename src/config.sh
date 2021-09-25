@@ -1,4 +1,5 @@
 #!/bin/bash
+# Version 1.3
 ################################## Characters which are not supported ###################
 #
 #	Don't use these characters for db password, db name, website root path, etc

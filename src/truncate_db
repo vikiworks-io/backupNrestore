@@ -1,4 +1,5 @@
 #!/bin/bash
+# Version 1.3
 # truncate db | delete all tables inside a database
 #
 #		Author	: Viki (a) Vignesh Natarajan 
