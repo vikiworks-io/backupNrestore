@@ -4,5 +4,6 @@ The following tasks has to be implemented soon,
 	2. Support for DB Password with space character
 	3. Support for Website root path with space character. Example "/home/web users/html"
 	4. Support for DB Name with space character
+        5. Verify whether the DB username, DB password, DB name exist in some code config file before backing up. [ Otherwise we will be exporting code for this website and db for some other website]
 
 
