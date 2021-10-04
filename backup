@@ -431,10 +431,10 @@ function main()
     create_backup_dir_with_timestamp
     print_config
     export_website_database
+    GIT_SNAPSHOT
     export_website_data
     clear_log_files
     remove_unused_files_n_folders_from_backup
-    GIT_SNAPSHOT
     generate_backup
 }
 
