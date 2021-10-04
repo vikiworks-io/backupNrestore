@@ -17,6 +17,14 @@ ARG_COUNT=$#
 TABLE_LIST=""
 flag=0
 
+function command_exec_dir_check()
+{
+	if [ ! -f db_truncate ]; then
+		echo "error: command should be executed from backupNrestore directory"
+		exit 1
+	fi
+}
+
 function init_commands(){
     C_GREP=$(which grep)
     [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] Command doesn't exist ( grep ) "; exit 1; }
@@ -72,7 +80,9 @@ function retry_delete_tables(){
 
 
 echo
+
 check_arguments
+command_exec_dir_check
 init_commands
 
 retry_delete_tables

@@ -15,6 +15,14 @@ function get_current_dir()
     CURRENT_DIR=`pwd -P`
 }
 
+function command_exec_dir_check()
+{
+	if [ ! -f restore ]; then
+		echo "error: command should be executed from backupNrestore directory"
+		exit 1
+	fi
+}
+
 function create_db_if_not_exist(){
     DB_NAME=$1
     echo "Creating DB if not exist ( $DB_NAME )"
@@ -473,6 +481,7 @@ function configure_ownership(){
 function main()
 {
     get_current_dir
+    command_exec_dir_check
     import_config
     set_source_path
     check_whether_webroot_dir_inside_source_dir

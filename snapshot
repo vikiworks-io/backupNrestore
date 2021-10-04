@@ -14,6 +14,14 @@ function get_current_dir()
     CURRENT_DIR=`pwd -P`
 }
 
+function command_exec_dir_check()
+{
+	if [ ! -f snapshot ]; then
+		echo "error: command should be executed from backupNrestore directory"
+		exit 1
+	fi
+}
+
 function import_config()
 {
     cd $CURRENT_DIR
@@ -72,6 +80,12 @@ function git_checkout()
     switch2master_branch_if_exist
 }
 
+function remove_git_from_backupNrestore_dir()
+{
+    cd $CURRENT_DIR
+    rm -rf .git
+}
+
 function git_commit()
 {
     cd ../
@@ -119,6 +133,7 @@ function git_snapshot()
 {
     is_git_installed
     get_current_dir
+    command_exec_dir_check
 
     if [ $ARG1 == "no_db_export"]; then
         echo "  [ status ] snapshot without db export"
@@ -130,6 +145,7 @@ function git_snapshot()
     import_config
     is_git_config_valid
     get_timestamp
+    remove_git_from_backupNrestore_dir
     git_commit
 }
 
