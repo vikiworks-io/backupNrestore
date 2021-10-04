@@ -63,4 +63,3 @@ DB_PORT='3306'
 ################################### MYSQL ROOT USER  DETAILS ( Optionsl ) ###############
 MYSQL_ADMIN_USERNAME=''
 MYSQL_ADMIN_PASSWORD=''
-

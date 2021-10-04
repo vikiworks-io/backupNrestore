@@ -138,8 +138,8 @@ function config_mismatch_check(){
         echo
         echo "    Location to change: "
         echo "    "
-        echo "        -> $SOURCE_PATH/db"
-        echo "        -> $SOURCE_PATH/code"
+        echo "        -> $SOURCE_PATH"
+        echo "        -> $SOURCE_PATH"
         echo "        -> $CURRENT_DIR/.config_old.sh"
         echo "    "
 	config_mismatch=1
@@ -402,19 +402,19 @@ function importe_database()
     cd $SOURCE_PATH
 
     if [ ! -z $DB1_NAME ]; then
-    import_db $DB1_NAME $DB1_USERNAME $DB1_PASSWORD "db/${DB1_NAME}.sql"
+    import_db $DB1_NAME $DB1_USERNAME $DB1_PASSWORD "$CURRENT_DIR/db_dump/${DB1_NAME}.sql"
     fi
 
     if [ ! -z $DB2_NAME ]; then
-    import_db $DB2_NAME $DB2_USERNAME $DB2_PASSWORD "db/${DB2_NAME}.sql"
+    import_db $DB2_NAME $DB2_USERNAME $DB2_PASSWORD "$CURRENT_DIR/db_dump/${DB2_NAME}.sql"
     fi
     
     if [ ! -z $DB3_NAME ]; then
-    import_db $DB3_NAME $DB3_USERNAME $DB3_PASSWORD "db/${DB3_NAME}.sql"
+    import_db $DB3_NAME $DB3_USERNAME $DB3_PASSWORD "$CURRENT_DIR/db_dump/${DB3_NAME}.sql"
     fi    
     
     if [ ! -z $DB4_NAME ]; then
-    import_db $DB4_NAME $DB4_USERNAME $DB4_PASSWORD "db/${DB4_NAME}.sql"
+    import_db $DB4_NAME $DB4_USERNAME $DB4_PASSWORD "$CURRENT_DIR/db_dump/${DB4_NAME}.sql"
     fi
 }
 
@@ -422,23 +422,13 @@ function importe_code()
 {
     cd $SOURCE_PATH
 
-    cp -arf code/. ${WEBSITE_ROOT_DIR}/ 2>/dev/null 1>/dev/null
+    cp -arf . ${WEBSITE_ROOT_DIR}/ 2>/dev/null 1>/dev/null
     if [ $? -ne 0 ]; then
         #some system doesn't support -a option
-        cp -rf code/. ${WEBSITE_ROOT_DIR}/
+        cp -rf . ${WEBSITE_ROOT_DIR}/
         [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] Website copy failed"; exit 1; }
-        cp -rf code/.htaccess ${WEBSITE_ROOT_DIR}/
-        cp -rf code/*.* ${WEBSITE_ROOT_DIR}/
-    fi
-}
-
-function update_backupNrestore_tool(){
-    cd $SOURCE_PATH
-    cp -arf $TOOL_NAME ${WEBSITE_ROOT_DIR}/ 2>/dev/null 1>/dev/null
-    if [ $? -ne 0 ]; then
-        #some system doesn't support -a option
-        cp -rf $TOOL_NAME ${WEBSITE_ROOT_DIR}/
-        [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] ( $TOOL_NAME ) copy failed"; exit 1; }
+        cp -rf .htaccess ${WEBSITE_ROOT_DIR}/
+        cp -rf *.* ${WEBSITE_ROOT_DIR}/
     fi
 }
 
@@ -488,7 +478,6 @@ function main()
     db_empty_check
     importe_database
     importe_code
-    update_backupNrestore_tool
     configure_ownership
     verify_restore
 }

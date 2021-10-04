@@ -18,16 +18,6 @@ function get_tool_name()
     TOOL_NAME=`basename $CURRENT_DIR`
 }
 
-function get_timestamp()
-{
-    DAY=$(date '+%d')
-    MONTH=$(date '+%m')
-    YEAR=$(date '+%Y')
-    HOUR=$(date '+%H')
-    MINUTE=$(date '+%M')
-    TIME_STAMP="D${DAY}${MONTH}${YEAR}_T${HOUR}${MINUTE}"
-}
-
 function import_config()
 {
     cd $CURRENT_DIR
@@ -143,27 +133,6 @@ function remove_trailing_slash()
    DOMAIN=`echo ${DOMAIN%/}`
 }
 
-function check_whether_backup_dir_inside_webroot()
-{
-    # Example:
-    #   
-    #   if (/home/website) inside ( /home/website/backup ) : TRUE 
-    #   
- 
-    if [[ $BACKUP_DIR =~ $WEBSITE_ROOT_DIR ]]; then
-        echo
-        echo "  [ possible error ] It looks like backup directory is inside website root"
-        echo
-        echo "       -> [ BACKUP_DIR : $BACKUP_DIR ]"
-        echo
-        echo "       -> [ WEBSITE_ROOT_DIR : $WEBSITE_ROOT_DIR ]"
-        echo
-        echo "  [ suggestion  ] Don't keep backup directory inside website root directory"
-        echo
-        exit 1
-    fi
-}
-
 function check_whether_backup_tool_is_inside_webroot()
 {
     if [[ "$CURRENT_DIR" != "$WEBSITE_ROOT_DIR/$TOOL_NAME" ]]; then
@@ -171,14 +140,6 @@ function check_whether_backup_tool_is_inside_webroot()
      echo "  [ error ] Backup tool directory ( $TOOL_NAME ) should be inside website root ( $WEBSITE_ROOT_DIR )"
      exit 1
     fi
-}
-
-function create_backup_dir()
-{
-    cd $BACKUP_DIR 2> /dev/null 1>/dev/null
-    if [ $? -ne 0 ]; then
-        mkdir -p $BACKUP_DIR
-    fi 
 }
 
 function remove_db_dump_dir()
@@ -203,32 +164,6 @@ function get_abs_path_web_root()
     cd $WEBSITE_ROOT_DIR
     [ $? -ne 0 ] && { echo "[ ERROR ] [ ${LINENO} ]"; exit 1; }
     WEBSITE_ROOT_DIR=`pwd -P`
-}
-
-function input_validation()
-{
-    if [ "$WEBSITE_ROOT_DIR" = "$BACKUP_DIR" ]; then
-        echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] WEBSITE_ROOT_DIR and BACKUP_DIR should be different"
-        exit 1
-    fi
-}
-
-function create_backup_dir_with_timestamp()
-{
-
-    BACKUP_LABEL="${DOMAIN}_${TIME_STAMP}"
-    
-    #remove any backup directory with same name
-    rm -rf "$BACKUP_DIR/$BACKUP_LABEL"
-
-    #create backup directory
-    mkdir -p "$BACKUP_DIR/$BACKUP_LABEL"
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] "; exit 1; }
-    mkdir -p "$BACKUP_DIR/$BACKUP_LABEL/"
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] "; exit 1; }
-    mkdir -p "$BACKUP_DIR/$BACKUP_LABEL/"
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] "; exit 1; }
-
 }
 
 function print_config()
@@ -343,92 +278,23 @@ function export_website_database()
     fi
 }
 
-#Export website code and data
-function export_website_data()
-{
-    echo "  exporting website data ( $WEBSITE_ROOT_DIR/ )"
-    cp -arf $WEBSITE_ROOT_DIR/. $BACKUP_DIR/$BACKUP_LABEL/ 2>/dev/null
-    if [ $? -ne 0 ]; then
-        #some system doesn't support -a option
-        cp -rf $WEBSITE_ROOT_DIR/. $BACKUP_DIR/$BACKUP_LABEL/ 2>/dev/null
-        [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] Website copy failed"; exit 1; }
-        cp -rf $WEBSITE_ROOT_DIR/.htaccess $BACKUP_DIR/$BACKUP_LABEL/ 2>/dev/null
-        cp -rf $WEBSITE_ROOT_DIR/*.* $BACKUP_DIR/$BACKUP_LABEL/ 2>/dev/null
-    fi
-
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
-}
-
-function clear_log_files()
-{
-    cd $BACKUP_DIR/$BACKUP_LABEL/
-
-    find . -name "*.log"|while read fname; do
-        echo "" > "$fname"
-    done
-
-    echo "  ( status ) all log files are truncated"
-
-}
-
-function remove_unused_files_n_folders_from_backup()
-{
-    cd $BACKUP_DIR/$BACKUP_LABEL/
-
-    #remove wordpress backup files 
-    find . -name "*.wpress"|while read fname; do
-        rm "$fname"
-    done
-
-    [ $? -eq 0 ] && { echo "( status ) wordpress backup files are removed from backup" ; }
-}
-
-# Compress website backup and create a tar.gz archive
-function generate_backup()
-{
-    cd $BACKUP_DIR
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
-
-    tar -czvf "${BACKUP_LABEL}.tar.gz" $BACKUP_LABEL 1> /dev/null
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
-
-    #######################  remove $BACKUP_LABEL directory ###################
-    rm -rf $BACKUP_LABEL
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
-
-    echo
-    echo "  [ SUCCESS ] website backup ( $BACKUP_DIR/${BACKUP_LABEL}.tar.gz )" 
-    echo
-    echo "  WEBSITE BACKUP IS SUCCESSFUL"
-    echo
-}
-
 function main()
 {
     get_current_dir
     get_tool_name
-    get_timestamp
     import_config
     backup_config
     empty_config_check
     remove_trailing_slash
-    check_whether_backup_dir_inside_webroot
     check_whether_backup_tool_is_inside_webroot
     get_abs_path_web_root
-    input_validation
     db_access_check
     website_data_check
-    create_backup_dir
     remove_db_dump_dir 
     create_db_dump_dir
     get_abs_path_backup_dir
-    create_backup_dir_with_timestamp
     print_config
     export_website_database
-    export_website_data
-    clear_log_files
-    remove_unused_files_n_folders_from_backup
-    generate_backup
 }
 
 # Main Code
