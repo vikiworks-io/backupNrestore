@@ -1,0 +1,484 @@
+#!/bin/bash
+# Version 1.4
+# Backup website ( code and database )
+#
+#		Author	: Viki (a) Vignesh Natarajan 
+#		Contact	: vikiworks.io
+#		Licence : MIT
+
+ARG1=$1
+
+compress_backup=0
+
+if [ ! -z "$ARG1" ]; then
+    if [ "$ARG1" == "tar" ]; then
+        compress_backup=1
+    fi
+fi
+
+db_exported=0
+
+function get_current_dir()
+{
+    CURRENT_DIR=`pwd -P`
+}
+
+function prereq_check()
+{
+    which rsync 2>/dev/null 1>/dev/null
+    if [ $? -ne 0 ]; then
+        echo "  error: this utility needs rsync, rsync not installed"
+        exit 1
+    fi
+
+}
+
+function command_exec_dir_check()
+{
+	if [ ! -f backup ]; then
+		echo "error: command should be executed from backupNrestore directory"
+		exit 1
+	fi
+}
+
+function get_tool_name()
+{
+    basename $CURRENT_DIR 2> /dev/null 1> /dev/null 
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] "; exit 1; }
+    TOOL_NAME=`basename $CURRENT_DIR`
+}
+
+function get_timestamp()
+{
+    DAY=$(date '+%d')
+    MONTH=$(date '+%m')
+    YEAR=$(date '+%Y')
+    HOUR=$(date '+%H')
+    MINUTE=$(date '+%M')
+    TIME_STAMP="D${DAY}${MONTH}${YEAR}_T${HOUR}${MINUTE}"
+}
+
+function import_config()
+{
+    cd $CURRENT_DIR
+    source ./config.sh
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] "; exit 1; }
+    echo
+    echo
+}
+
+function backup_config()
+{
+    echo "  [ status ] backing up config"
+    cd $CURRENT_DIR
+    cp config.sh .config_old.sh 
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] "; exit 1; }
+    echo
+}
+
+function exit_if_space_exist(){
+    STR="$1"
+    MESSAGE="$2"
+    if [[ "$STR" == *" "* ]]; then
+        echo "  error: ( $MESSAGE ) - ( "$STR" ) "
+        echo
+        exit 1
+    fi
+}
+
+function exit_if_dollar_exist(){
+    STR="$1"
+    MESSAGE="$2"
+    if [[ "$STR" == *"$"* ]]; then
+        echo "  error: ( $MESSAGE ) - ( "$STR" ) "
+        echo
+        exit 1
+    fi
+}
+
+function empty_config_check()
+{
+    config_error=0
+
+    echo
+    [ -z $DOMAIN ] && { echo "  [ CONFIG ERROR ] :  DOMAIN" ; config_error=1; }
+    [ -z $DB1_NAME ] && { echo "  [ CONFIG ERROR ] :  DB1_NAME" ; config_error=1; }
+    [ -z $DB1_USERNAME ] && { echo "  [ CONFIG ERROR ] :  DB1_USERNAME" ; config_error=1; }
+    [ -z $DB1_PASSWORD ] && { echo "  [ CONFIG ERROR ] :  DB1_PASSWORD" ; config_error=1; }
+    [ -z $DB_HOST ] && { echo "  [ CONFIG ERROR ] :  DB_HOST" ; config_error=1; }
+    [ -z $DB_PORT ] && { echo "  [ CONFIG ERROR ] :  DB_PORT" ; config_error=1; }
+    [ -z $WEBSITE_ROOT_DIR ] && { echo "  [ CONFIG ERROR ] :  WEBSITE_ROOT_DIR" ; config_error=1; }
+    [ -z $BACKUP_DIR ] && { echo "  [ CONFIG ERROR ] :  BACKUP_DIR" ; config_error=1; }
+
+    if [ $config_error -eq 1 ]; then
+        echo
+        echo "  [ ERROR ] Fix configuration error and try again ( config.sh ) "
+        echo
+        exit 1
+   fi
+
+   exit_if_space_exist "$CURRENT_DIR"       "Space character is not supported in CURRENT_DIR"
+   exit_if_space_exist "$WEBSITE_ROOT_DIR"  "Space character is not supported in WEBSITE_ROOT_DIR"
+   exit_if_space_exist "$DOMAIN"            "Space character is not supported in DOMAIN"
+   exit_if_space_exist "$DB1_NAME"          "Space character is not supported in DB1_NAME"
+   exit_if_space_exist "$DB2_NAME"          "Space character is not supported in DB2_NAME"
+   exit_if_space_exist "$DB3_NAME"          "Space character is not supported in DB3_NAME"
+   exit_if_space_exist "$DB4_NAME"          "Space character is not supported in DB4_NAME"
+   exit_if_space_exist "$DB1_USERNAME"      "Space character is not supported in DB1_USERNAME"
+   exit_if_space_exist "$DB2_USERNAME"      "Space character is not supported in DB2_USERNAME"
+   exit_if_space_exist "$DB3_USERNAME"      "Space character is not supported in DB3_USERNAME"
+   exit_if_space_exist "$DB4_USERNAME"      "Space character is not supported in DB4_USERNAME"
+   exit_if_space_exist "$DB1_PASSWORD"      "Space character is not supported in DB1_PASSWORD"
+   exit_if_space_exist "$DB2_PASSWORD"      "Space character is not supported in DB2_PASSWORD"
+   exit_if_space_exist "$DB3_PASSWORD"      "Space character is not supported in DB3_PASSWORD"
+   exit_if_space_exist "$DB4_PASSWORD"      "Space character is not supported in DB4_PASSWORD"
+   exit_if_space_exist "$DB_HOST"           "Space character is not supported in DB_HOST"
+   exit_if_space_exist "$DB_PORT"           "Space character is not supported in DB_PORT"
+   exit_if_space_exist "$BACKUP_DIR"        "Space character is not supported in BACKUP_DIR"
+   exit_if_space_exist "$MYSQL_ADMIN_USERNAME"      "Space character is not supported in MYSQL_ADMIN_USERNAME"
+   exit_if_space_exist "$MYSQL_ADMIN_PASSWORD"      "Space character is not supported in MYSQL_ADMIN_PASSWORD"
+
+   exit_if_dollar_exist "$CURRENT_DIR"       "Space character is not supported in CURRENT_DIR"
+   exit_if_dollar_exist "$WEBSITE_ROOT_DIR"  "Dollar character is not supported in WEBSITE_ROOT_DIR"
+   exit_if_dollar_exist "$DOMAIN"            "Dollar character is not supported in DOMAIN"
+   exit_if_dollar_exist "$DB1_NAME"          "Dollar character is not supported in DB1_NAME"
+   exit_if_dollar_exist "$DB2_NAME"          "Dollar character is not supported in DB2_NAME"
+   exit_if_dollar_exist "$DB3_NAME"          "Dollar character is not supported in DB3_NAME"
+   exit_if_dollar_exist "$DB4_NAME"          "Dollar character is not supported in DB4_NAME"
+   exit_if_dollar_exist "$DB1_USERNAME"      "Dollar character is not supported in DB1_USERNAME"
+   exit_if_dollar_exist "$DB2_USERNAME"      "Dollar character is not supported in DB2_USERNAME"
+   exit_if_dollar_exist "$DB3_USERNAME"      "Dollar character is not supported in DB3_USERNAME"
+   exit_if_dollar_exist "$DB4_USERNAME"      "Dollar character is not supported in DB4_USERNAME"
+   exit_if_dollar_exist "$DB1_PASSWORD"      "Dollar character is not supported in DB1_PASSWORD"
+   exit_if_dollar_exist "$DB2_PASSWORD"      "Dollar character is not supported in DB2_PASSWORD"
+   exit_if_dollar_exist "$DB3_PASSWORD"      "Dollar character is not supported in DB3_PASSWORD"
+   exit_if_dollar_exist "$DB4_PASSWORD"      "Dollar character is not supported in DB4_PASSWORD"
+   exit_if_dollar_exist "$DB_HOST"           "Dollar character is not supported in DB_HOST"
+   exit_if_dollar_exist "$DB_PORT"           "Dollar character is not supported in DB_PORT"
+   exit_if_dollar_exist "$BACKUP_DIR"        "Dollar character is not supported in BACKUP_DIR"
+   exit_if_dollar_exist "$MYSQL_ADMIN_USERNAME"      "Dollar character is not supported in MYSQL_ADMIN_USERNAME"
+   exit_if_dollar_exist "$MYSQL_ADMIN_PASSWORD"      "Dollar character is not supported in MYSQL_ADMIN_PASSWORD"
+
+}
+
+function remove_trailing_slash()
+{
+   BACKUP_DIR=`echo ${BACKUP_DIR%/}`
+   BACKUP_DIR=`echo ${BACKUP_DIR%/}`
+   
+   WEBSITE_ROOT_DIR=`echo ${WEBSITE_ROOT_DIR%/}`
+   WEBSITE_ROOT_DIR=`echo ${WEBSITE_ROOT_DIR%/}`
+   
+   DOMAIN=`echo ${DOMAIN%/}`
+   DOMAIN=`echo ${DOMAIN%/}`
+}
+
+function check_whether_backup_dir_inside_webroot()
+{
+    # Example:
+    #   
+    #   if (/home/website) inside ( /home/website/backup ) : TRUE 
+    #   
+ 
+    if [[ $BACKUP_DIR =~ $WEBSITE_ROOT_DIR ]]; then
+        echo
+        echo "  [ possible error ] It looks like backup directory is inside website root"
+        echo
+        echo "       -> [ BACKUP_DIR : $BACKUP_DIR ]"
+        echo
+        echo "       -> [ WEBSITE_ROOT_DIR : $WEBSITE_ROOT_DIR ]"
+        echo
+        echo "  [ suggestion  ] Don't keep backup directory inside website root directory"
+        echo
+        exit 1
+    fi
+}
+
+function check_whether_backup_tool_is_inside_webroot()
+{
+    if [[ "$CURRENT_DIR" != "$WEBSITE_ROOT_DIR/$TOOL_NAME" ]]; then
+     echo
+     echo "  [ error ] Backup tool directory ( $TOOL_NAME ) should be inside website root ( $WEBSITE_ROOT_DIR )"
+     exit 1
+    fi
+}
+
+function create_backup_dir()
+{
+    cd $BACKUP_DIR 2> /dev/null 1>/dev/null
+    if [ $? -ne 0 ]; then
+        mkdir -p $BACKUP_DIR
+    fi 
+}
+
+function remove_db_dump_dir()
+{
+    rm -rf $CURRENT_DIR/db_dump 2> /dev/null 1>/dev/null
+}
+
+function create_db_dump_dir()
+{
+    mkdir -p $CURRENT_DIR/db_dump 2> /dev/null 1>/dev/null
+}
+
+function get_abs_path_backup_dir()
+{
+    cd $BACKUP_DIR
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
+    BACKUP_DIR=`pwd -P`
+}
+
+function get_abs_path_web_root()
+{
+    cd $WEBSITE_ROOT_DIR
+    [ $? -ne 0 ] && { echo "[ ERROR ] [ ${LINENO} ]"; exit 1; }
+    WEBSITE_ROOT_DIR=`pwd -P`
+}
+
+function input_validation()
+{
+    if [ "$WEBSITE_ROOT_DIR" = "$BACKUP_DIR" ]; then
+        echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] WEBSITE_ROOT_DIR and BACKUP_DIR should be different"
+        exit 1
+    fi
+}
+
+function generate_backup_label()
+{
+    BACKUP_LABEL="${DOMAIN}_${TIME_STAMP}"
+}
+
+function create_incremental_backup_dir()
+{
+
+    INCR_BACKUP_DIR="INCR_BKUP"
+
+    if [ -d "$BACKUP_DIR/$INCR_BACKUP_DIR/$DOMAIN" ]; then
+        return
+    fi
+
+    #create backup directory
+    mkdir -p "$BACKUP_DIR/$INCR_BACKUP_DIR/$DOMAIN"
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] "; exit 1; }
+
+}
+
+
+function print_config()
+{
+    echo
+    echo "  Website Root      : $WEBSITE_ROOT_DIR"
+    echo "  Backup Directory  : $BACKUP_DIR/$INCR_BACKUP_DIR/$DOMAIN"
+    echo "  DB HOST           : $DB_HOST"
+    echo "  DB PORT           : $DB_PORT"
+    echo  
+    [ ! -z $DB1_NAME ] && 	{ echo "  DB NAME       (1) : $DB1_NAME"; }
+    [ ! -z $DB1_USERNAME ] && 	{ echo "  DB USERNAME   (1) : $DB1_USERNAME"; }
+    
+    [ ! -z $DB2_NAME ] && 	{ echo ""; echo "  DB NAME       (2) : $DB2_NAME"; }
+    [ ! -z $DB2_USERNAME ] && 	{ echo "  DB USERNAME   (2) : $DB2_USERNAME"; }
+    
+    [ ! -z $DB3_NAME ] && 	{ echo ""; echo "  DB NAME       (3) : $DB3_NAME"; }
+    [ ! -z $DB3_USERNAME ] && 	{ echo "  DB USERNAME   (3) : $DB3_USERNAME"; }
+    
+    [ ! -z $DB4_NAME ] && 	{ echo ""; echo "  DB NAME       (4) : $DB4_NAME"; }
+    [ ! -z $DB4_USERNAME ] && 	{ echo "  DB USERNAME   (4) : $DB4_USERNAME"; }
+    echo 
+    echo 
+    echo "  DB Export Directory : $CURRENT_DIR/db_dump" 
+    echo 
+    echo 
+}
+
+function db_access_check()
+{
+
+    if [[ -z $MYSQL_ADMIN_USERNAME ]]; then
+        table_count=$(mysql -u$DB1_USERNAME -p$DB1_PASSWORD -h $DB_HOST -P $DB_PORT $DB1_NAME -e "SHOW TABLES;" 2>/dev/null | wc -l)
+    else
+        table_count=$(mysql -u$MYSQL_ADMIN_USERNAME -p$MYSQL_ADMIN_PASSWORD -h $DB_HOST -P $DB_PORT $DB1_NAME -e "SHOW TABLES;" 2>/dev/null | wc -l)
+    fi
+
+    if [ $? -ne 0 ];then
+        echo "[ ERROR ] [ ${LINENO} ] DB access error"
+        exit 1
+    fi
+
+}
+
+# Check if website content is available or not
+function website_data_check()
+{
+    file_count=`ls ${WEBSITE_ROOT_DIR}/ | wc -l`
+    if [ $file_count -le 0 ];then
+        echo "[ ERROR ] [ ${LINENO} ] website root directory is empty, nothing to backup"
+        exit 1
+    fi
+}
+
+function export_db(){
+	DB_NAME=$1
+	DB_USER=$2
+	DB_PASS=$3
+	OUT_FILE=$4
+
+	if [ -z $DB_NAME ]; then
+		echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] DB NAME MISSING" ; exit 1; 
+	fi
+
+	if [ -z $DB_USER ]; then
+		echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] DB USERNAME MISSING" ; exit 1; 
+	fi
+
+	if [ -z $DB_PASS ]; then
+		echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] DB PASSWORD MISSING" ; exit 1; 
+	fi
+
+	if [ -z $OUT_FILE ]; then
+		echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] DB EXPORT OUTPUT FILE MISSING" ; exit 1; 
+	fi
+
+	echo "  exporting DB ( $DB_NAME )"
+	
+    	if [[ -z "$MYSQL_ADMIN_USERNAME" ]]; then
+        	mysqldump -h "$DB_HOST" -P $DB_PORT -u"$DB_USER"  -p"$DB_PASS" "$DB_NAME" > $OUT_FILE  2>/dev/null  
+    		if [ $? -ne 0 ]; then 
+            mysqldump --column-statistics=0 "$DB_HOST" -P $DB_PORT -u"$DB_USER"  -p"$DB_PASS" "$DB_NAME" > $OUT_FILE  2>/dev/null
+            fi
+            [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
+    	else
+        	mysqldump -h "$DB_HOST" -P $DB_PORT -u"$MYSQL_ADMIN_USERNAME"  -p"$MYSQL_ADMIN_PASSWORD" "$DB_NAME" > $OUT_FILE 2>/dev/null
+    		if [ $? -ne 0 ]; then 
+        	mysqldump --column-statistics=0  -h "$DB_HOST" -P $DB_PORT -u"$MYSQL_ADMIN_USERNAME" -p"$MYSQL_ADMIN_PASSWORD" "$DB_NAME" > $OUT_FILE 2>/dev/null
+            fi
+    		[ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
+    	fi
+
+
+}
+
+function export_website_database()
+{
+    if [ ! -z $DB1_NAME ]; then
+    	export_db $DB1_NAME $DB1_USERNAME  $DB1_PASSWORD "$CURRENT_DIR/db_dump/${DB1_NAME}.sql"
+    fi
+
+
+    if [ ! -z $DB2_NAME ]; then
+    	export_db $DB2_NAME $DB2_USERNAME  $DB2_PASSWORD "$CURRENT_DIR/db_dump/${DB2_NAME}.sql"
+    fi
+    
+    if [ ! -z $DB3_NAME ]; then
+	export_db $DB3_NAME $DB3_USERNAME  $DB3_PASSWORD "$CURRENT_DIR/db_dump/${DB3_NAME}.sql"
+    fi
+
+    if [ ! -z $DB4_NAME ]; then
+    	export_db $DB4_NAME $DB4_USERNAME  $DB4_PASSWORD "$CURRENT_DIR/db_dump/${DB4_NAME}.sql"
+    fi
+}
+
+#Export website code and data
+function export_website_data()
+{
+    echo "  exporting website data ( $WEBSITE_ROOT_DIR/ )"
+    #copy hidden files too
+    rsync --recursive  $WEBSITE_ROOT_DIR/ $BACKUP_DIR/$INCR_BACKUP_DIR/$DOMAIN/ 
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
+}
+
+function clear_log_files()
+{
+    cd $BACKUP_DIR/$INCR_BACKUP_DIR/$DOMAIN/
+
+    find . -name "*.log"|while read fname; do
+        echo "" > "$fname"
+    done
+
+    echo "  ( status ) all log files are truncated"
+
+}
+
+function remove_unused_files_n_folders_from_backup()
+{
+    cd $BACKUP_DIR/$INCR_BACKUP_DIR/$DOMAIN
+
+    #remove wordpress backup files 
+    find . -name "*.wpress"|while read fname; do
+        rm "$fname"
+    done
+
+    [ $? -eq 0 ] && { echo "( status ) wordpress backup files are removed from backup" ; }
+}
+
+# Compress website backup and create a tar.gz archive
+function tar_backup()
+{
+    cd $BACKUP_DIR/$INCR_BACKUP_DIR/$DOMAIN
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
+
+    cd ../
+
+    tar -czvf "${BACKUP_LABEL}.tar.gz" $DOMAIN 1> /dev/null
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
+
+    echo
+    echo "  [ SUCCESS ] incremental website backup ( $BACKUP_DIR/INCR_BKUP/$DOMAIN )" 
+    echo
+    echo "  [ SUCCESS ] compressed website backup  ( $BACKUP_DIR/INCR_BKUP/${BACKUP_LABEL}.tar.gz )" 
+    echo
+    echo "  WEBSITE BACKUP IS SUCCESSFUL"
+    echo
+}
+
+function SNAPSHOT_WEBSITE()
+{
+    cd $CURRENT_DIR
+
+    ./snapshot "no_db_export" 
+
+    if [ $? -eq 0 ]; then
+        echo " warning: snapshot failed, proceeding backup without snapshot"
+    fi
+}
+
+function main()
+{
+    get_current_dir
+    prereq_check
+    command_exec_dir_check
+    get_tool_name
+    get_timestamp
+    import_config
+    backup_config
+    empty_config_check
+    remove_trailing_slash
+    check_whether_backup_dir_inside_webroot
+    check_whether_backup_tool_is_inside_webroot
+    get_abs_path_web_root
+    input_validation
+    db_access_check
+    website_data_check
+    create_backup_dir
+    remove_db_dump_dir 
+    create_db_dump_dir
+    get_abs_path_backup_dir
+    create_incremental_backup_dir
+    generate_backup_label
+    print_config
+    export_website_database
+    SNAPSHOT_WEBSITE
+    export_website_data
+    clear_log_files
+    remove_unused_files_n_folders_from_backup
+    
+    if [ $compress_backup -eq 1 ]; then
+        tar_backup
+    else
+        echo "Incremental Backup Successful ( $BACKUP_DIR/$INCR_BACKUP_DIR/$DOMAIN )"
+    fi
+}
+
+# Main Code
+main
+
+
