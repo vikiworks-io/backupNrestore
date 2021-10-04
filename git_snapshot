@@ -45,7 +45,7 @@ function get_timestamp()
     YEAR=$(date '+%Y')
     HOUR=$(date '+%H')
     MINUTE=$(date '+%M')
-    TIME_STAMP="D${DAY}${MONTH}${YEAR}_T${HOUR}${MINUTE}"
+    TIME_STAMP="D${DAY}${MONTH}${YEAR}#T${HOUR}${MINUTE}"
 }
 
 function switch2master_branch_if_exist()
@@ -62,7 +62,7 @@ function git_checkout()
     BRANCH_NAME="master"
     git branch | grep $BRANCH_NAME 2> /dev/null 1> /dev/null
     if [ $? -eq 0 ]; then 
-        BRANCH_NAME="version-${TIME_STAMP}"
+        BRANCH_NAME="${TIME_STAMP}"
         echo "  Creating branch ( $BRANCH_NAME )"
         git checkout -b "$BRANCH_NAME"
     fi
