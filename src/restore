@@ -1,5 +1,5 @@
 #!/bin/bash
-# Version 1.3
+# Version 1.4
 
 # restore a website from from backup
 #
@@ -428,6 +428,7 @@ function importe_code()
         cp -rf . ${WEBSITE_ROOT_DIR}/
         [ $? -ne 0 ] && { echo "  [ ERROR ] [ ${LINENO} ] Website copy failed"; exit 1; }
         cp -rf .htaccess ${WEBSITE_ROOT_DIR}/
+        cp -rf .git ${WEBSITE_ROOT_DIR}/
         cp -rf *.* ${WEBSITE_ROOT_DIR}/
     fi
 }

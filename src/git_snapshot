@@ -1,0 +1,68 @@
+#!/bin/bash
+# Version 1.4
+# Snapshot website ( code and database )
+#
+#		Author	: Viki (a) Vignesh Natarajan 
+#		Contact	: vikiworks.io
+#		Licence : MIT
+
+function get_current_dir()
+{
+    CURRENT_DIR=`pwd -P`
+}
+
+function import_config()
+{
+    cd $CURRENT_DIR
+    source ./config.sh
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] "; exit 1; }
+    echo
+    echo
+}
+
+
+function get_timestamp()
+{
+    DAY=$(date '+%d')
+    MONTH=$(date '+%m')
+    YEAR=$(date '+%Y')
+    HOUR=$(date '+%H')
+    MINUTE=$(date '+%M')
+    TIME_STAMP="D${DAY}${MONTH}${YEAR}_T${HOUR}${MINUTE}"
+}
+
+function backup_db(){
+    ./backup_db
+}
+
+function git_commit()
+{
+    cd ../
+    git init
+    git config --local user.email   "$GIT_EMAIL"
+    git config --local user.name    "$GIT_USERNAME"
+    git checkout master 2> /dev/null 1> /dev/null
+    git add .
+    git commit -m "$TIME_STAMP"
+    echo "  Creating branch ( version_${TIME_STAMP} )"
+    git checkout -b "version_${TIME_STAMP}"
+    git checkout master
+    echo "  DB is backed up and source code is versioned locally with git"
+    echo 
+    echo "  Complete source and db - base location : ( `pwd` )"
+    echo ""
+    echo "  Branch Name : version_${TIME_STAMP}"
+    echo ""
+    echo "  A snapshot of the website is done"
+    echo ""
+
+    cd $CURRENT_DIR
+}
+
+get_current_dir
+backup_db
+import_config
+get_timestamp
+git_commit
+
+
