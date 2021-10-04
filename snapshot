@@ -100,7 +100,6 @@ function git_commit()
     
     git_checkout 
 
-    echo "  DB is backed up and source code is versioned locally with git"
     echo 
     echo "  Complete source and db - base location : ( `pwd` )"
     echo ""
