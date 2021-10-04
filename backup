@@ -417,7 +417,7 @@ function SNAPSHOT_WEBSITE()
 {
     cd $CURRENT_DIR
 
-    ./snapshot "no_db_export" 2> /dev/null 1> /dev/null
+    ./snapshot "no_db_export" 
 
     if [ $? -eq 0 ]; then
         echo " warning: snapshot failed, proceeding backup without snapshot"

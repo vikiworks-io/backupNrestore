@@ -116,9 +116,9 @@ function is_git_installed()
 {
     which git 2>/dev/null 1>/dev/null
     if [ $? -ne 0 ]; then 
-        echo "notice: git is not installed, unable to snapshot"
+        echo "  warning: git is not installed, unable to snapshot"
         echo ""
-        echo "Install git before trying snapshot"
+        echo "  Install git before trying snapshot"
         echo ""
         exit 1
     fi
