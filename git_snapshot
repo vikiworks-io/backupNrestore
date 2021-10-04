@@ -20,6 +20,23 @@ function import_config()
     echo
 }
 
+function empty_config_check()
+{
+    config_error=0
+
+    echo
+
+    [ -z "$GIT_USERNAME" ] && { echo "  [ CONFIG ERROR ] :  GIT_USERNAME" ; config_error=1; }
+    [ -z "$GIT_EMAIL" ] && { echo "  [ CONFIG ERROR ] :  GIT_EMAIL" ; config_error=1; }
+
+    if [ $config_error -eq 1 ]; then
+        echo
+        echo "  [ ERROR ] Fix configuration error and try again ( config.sh ) "
+        echo
+        exit 1
+   fi
+}
+
 
 function get_timestamp()
 {
@@ -32,7 +49,28 @@ function get_timestamp()
 }
 
 function backup_db(){
-    ./backup_db
+    ./db_backup
+}
+
+function switch2master_branch_if_exist()
+{
+    git branch | grep master 2> /dev/null 1> /dev/null
+    
+    if [ $? -eq 0 ]; then 
+        git checkout master 2> /dev/null 1> /dev/null
+    fi 
+}
+
+function git_checkout()
+{
+    BRANCH_NAME="master"
+    git branch | grep $BRANCH_NAME 2> /dev/null 1> /dev/null
+    if [ $? -eq 0 ]; then 
+        BRANCH_NAME="version-${TIME_STAMP}"
+        echo "  Creating branch ( $BRANCH_NAME )"
+        git checkout -b "$BRANCH_NAME"
+    fi
+    switch2master_branch_if_exist
 }
 
 function git_commit()
@@ -41,17 +79,19 @@ function git_commit()
     git init
     git config --local user.email   "$GIT_EMAIL"
     git config --local user.name    "$GIT_USERNAME"
-    git checkout master 2> /dev/null 1> /dev/null
+  
+    switch2master_branch_if_exist
+
     git add .
     git commit -m "$TIME_STAMP"
-    echo "  Creating branch ( version_${TIME_STAMP} )"
-    git checkout -b "version_${TIME_STAMP}"
-    git checkout master
+    
+    git_checkout 
+
     echo "  DB is backed up and source code is versioned locally with git"
     echo 
     echo "  Complete source and db - base location : ( `pwd` )"
     echo ""
-    echo "  Branch Name : version_${TIME_STAMP}"
+    echo "  Branch Name : $BRANCH_NAME"
     echo ""
     echo "  A snapshot of the website is done"
     echo ""
@@ -62,6 +102,7 @@ function git_commit()
 get_current_dir
 backup_db
 import_config
+empty_config_check
 get_timestamp
 git_commit
 
