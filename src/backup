@@ -224,10 +224,6 @@ function create_backup_dir_with_timestamp()
     #create backup directory
     mkdir -p "$BACKUP_DIR/$BACKUP_LABEL"
     [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] "; exit 1; }
-    mkdir -p "$BACKUP_DIR/$BACKUP_LABEL/"
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] "; exit 1; }
-    mkdir -p "$BACKUP_DIR/$BACKUP_LABEL/"
-    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] "; exit 1; }
 
 }
 
@@ -250,6 +246,10 @@ function print_config()
     
     [ ! -z $DB4_NAME ] && 	{ echo ""; echo "  DB NAME       (4) : $DB4_NAME"; }
     [ ! -z $DB4_USERNAME ] && 	{ echo "  DB USERNAME   (4) : $DB4_USERNAME"; }
+    echo 
+    echo 
+    echo "DB Export Directory : $CURRENT_DIR/db_dump" 
+    echo 
     echo 
     echo "  Backup Label      : $BACKUP_LABEL"
     echo "  Backup File       : ${BACKUP_LABEL}.tar.gz"
