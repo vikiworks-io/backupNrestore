@@ -139,7 +139,7 @@ function git_snapshot()
     get_current_dir
     command_exec_dir_check
 
-    if [ $ARG1 == "no_db_export"]; then
+    if [ $ARG1 == "no_db_export" ]; then
         echo "  [ status ] snapshot without db export"
     else
         echo "  [ status ] snapshot with db export"
