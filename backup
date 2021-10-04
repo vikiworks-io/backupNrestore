@@ -403,6 +403,12 @@ function generate_backup()
     echo
 }
 
+function GIT_SNAPSHOT()
+{
+    cd $CURRENT_DIR
+    ./git_snapshot 2> /dev/null 1> /dev/null
+}
+
 function main()
 {
     get_current_dir
@@ -428,6 +434,7 @@ function main()
     export_website_data
     clear_log_files
     remove_unused_files_n_folders_from_backup
+    GIT_SNAPSHOT
     generate_backup
 }
 

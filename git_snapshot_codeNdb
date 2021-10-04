@@ -48,6 +48,10 @@ function get_timestamp()
     TIME_STAMP="D${DAY}${MONTH}${YEAR}_T${HOUR}${MINUTE}"
 }
 
+function backup_db(){
+    ./db_backup
+}
+
 function switch2master_branch_if_exist()
 {
     git branch | grep master 2> /dev/null 1> /dev/null
@@ -96,6 +100,7 @@ function git_commit()
 }
 
 get_current_dir
+backup_db
 import_config
 empty_config_check
 get_timestamp
