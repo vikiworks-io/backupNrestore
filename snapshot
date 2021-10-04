@@ -127,6 +127,11 @@ function is_git_installed()
 function backup_db(){
     echo "  exporting database(s)"
     ./db_backup
+    if [ $? -ne 0 ]; then
+        echo
+        echo "  warning: db export failed, proceeding to snapshot without db backup"
+        echo
+    fi
 }
 
 function git_snapshot()
