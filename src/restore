@@ -435,6 +435,7 @@ function importe_code()
 function verify_dns_config()
 {
     server_ip=`ping $DOMAIN -c1 | head -1 | grep -Eo '[0-9.]{4,}'`
+	verify_error=0
     
     ifconfig 2>/dev/null 1>/dev/null
 
