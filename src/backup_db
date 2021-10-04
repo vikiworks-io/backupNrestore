@@ -170,7 +170,6 @@ function print_config()
 {
     echo
     echo "  Website Root      : $WEBSITE_ROOT_DIR"
-    echo "  Backup Directory  : $BACKUP_DIR"
     echo "  DB HOST           : $DB_HOST"
     echo "  DB PORT           : $DB_PORT"
     echo  
@@ -186,8 +185,6 @@ function print_config()
     [ ! -z $DB4_NAME ] && 	{ echo ""; echo "  DB NAME       (4) : $DB4_NAME"; }
     [ ! -z $DB4_USERNAME ] && 	{ echo "  DB USERNAME   (4) : $DB4_USERNAME"; }
     echo 
-    echo "  Backup Label      : $BACKUP_LABEL"
-    echo "  Backup File       : ${BACKUP_LABEL}.tar.gz"
     echo 
 }
 
