@@ -6,6 +6,9 @@
 #		Contact	: vikiworks.io
 #		Licence : MIT
 
+ARG0=$0
+ARG1=$1
+
 function get_current_dir()
 {
     CURRENT_DIR=`pwd -P`
@@ -20,7 +23,7 @@ function import_config()
     echo
 }
 
-function empty_config_check()
+function is_git_config_valid()
 {
     config_error=0
 
@@ -46,10 +49,6 @@ function get_timestamp()
     HOUR=$(date '+%H')
     MINUTE=$(date '+%M')
     TIME_STAMP="D${DAY}${MONTH}${YEAR}#T${HOUR}${MINUTE}"
-}
-
-function backup_db(){
-    ./db_backup
 }
 
 function switch2master_branch_if_exist()
@@ -99,11 +98,44 @@ function git_commit()
     cd $CURRENT_DIR
 }
 
-get_current_dir
-backup_db
-import_config
-empty_config_check
-get_timestamp
-git_commit
+function is_git_installed()
+{
+    which git 2>/dev/null 1>/dev/null
+    if [ $? -ne 0 ]; then 
+        echo "notice: git is not installed, unable to snapshot"
+        echo ""
+        echo "Install git before trying snapshot"
+        echo ""
+        exit 1
+    fi
+}
 
+function backup_db(){
+    echo "  exporting database(s)"
+    ./db_backup
+}
 
+function git_snapshot()
+{
+    is_git_installed
+    get_current_dir
+
+    if [ $ARG1 == "no_db_export"]; then
+        echo "  [ status ] snapshot without db export"
+    else
+        echo "  [ status ] snapshot with db export"
+        backup_db
+    fi
+    
+    import_config
+    is_git_config_valid
+    get_timestamp
+    git_commit
+}
+
+if [ -z $ARG1 ]; then
+    ARG1="export_db"
+fi
+
+git_snapshot 
+exit 0

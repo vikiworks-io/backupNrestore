@@ -6,6 +6,8 @@
 #		Contact	: vikiworks.io
 #		Licence : MIT
 
+db_exported=0
+
 function get_current_dir()
 {
     CURRENT_DIR=`pwd -P`
@@ -403,10 +405,15 @@ function generate_backup()
     echo
 }
 
-function GIT_SNAPSHOT()
+function SNAPSHOT_WEBSITE()
 {
     cd $CURRENT_DIR
-    ./git_snapshot 2> /dev/null 1> /dev/null
+
+    ./snapshot "no_db_export" 2> /dev/null 1> /dev/null
+
+    if [ $? -eq 0 ]; then
+        echo " warning: snapshot failed, proceeding backup without snapshot"
+    fi
 }
 
 function main()
@@ -431,7 +438,7 @@ function main()
     create_backup_dir_with_timestamp
     print_config
     export_website_database
-    GIT_SNAPSHOT
+    SNAPSHOT_WEBSITE
     export_website_data
     clear_log_files
     remove_unused_files_n_folders_from_backup

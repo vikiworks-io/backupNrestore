@@ -81,7 +81,7 @@ function is_db_empty()
             echo
             echo "  Help: Truncate Database"
             echo
-            echo "  ./truncate_db '$DB_HOST' '$DB_PORT' '$DB_NAME' '$DB_USER' '$DB_PASS'"
+            echo "  ./db_truncate '$DB_HOST' '$DB_PORT' '$DB_NAME' '$DB_USER' '$DB_PASS'"
             echo
             exit 1
         fi
