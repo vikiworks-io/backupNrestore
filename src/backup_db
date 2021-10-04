@@ -186,7 +186,7 @@ function print_config()
     [ ! -z $DB4_USERNAME ] && 	{ echo "  DB USERNAME   (4) : $DB4_USERNAME"; }
     echo 
     echo
-    echo "DB Export Directory : $CURRENT_DIR/db_dump" 
+    echo "  DB Export Directory : $CURRENT_DIR/db_dump" 
     echo 
 }
 
