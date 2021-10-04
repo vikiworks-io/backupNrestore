@@ -435,13 +435,18 @@ function importe_code()
 function verify_dns_config()
 {
     server_ip=`ping $DOMAIN -c1 | head -1 | grep -Eo '[0-9.]{4,}'`
-    ifconfig | grep $server_ip 2>/dev/null 1>/dev/null
+    
+    ifconfig 2>/dev/null 1>/dev/null
 
-    if [ $? -ne 0 ]; then
-	echo 
-	echo "  [ WARNING! ] Probably domain name ( $DOMAIN ) is not pointing to this server, fix DNS config or nginx configuration"
-	echo
-	verify_error=1
+    if [ $? -eq 0 ]; then
+        ifconfig | grep $server_ip 2>/dev/null 1>/dev/null
+
+        if [ $? -ne 0 ]; then
+	        echo 
+	        echo "  [ WARNING! ] Probably domain name ( $DOMAIN ) is not pointing to this server, fix DNS config or nginx configuration"
+	        echo
+	        verify_error=1
+        fi
     fi
 }
 
