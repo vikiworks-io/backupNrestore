@@ -446,6 +446,7 @@ function main()
 }
 
 # Main Code
+./banner.sh 2> /dev/null
 main
 
 
