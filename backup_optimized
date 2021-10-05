@@ -263,7 +263,7 @@ function generate_backup_label()
 function create_incremental_backup_dir()
 {
 
-    INCR_BACKUP_DIR="INCR_BKUP"
+    INCR_BACKUP_DIR="OPTIMIZED_BACKUP"
 
     if [ -d "$BACKUP_DIR/$INCR_BACKUP_DIR/$DOMAIN" ]; then
         return
@@ -446,9 +446,9 @@ function tar_backup()
     rm -rf $BACKUP_LABEL 1> /dev/null 2> /dev/null
 
     echo
-    echo "  [ SUCCESS ] incremental website backup ( $BACKUP_DIR/INCR_BKUP/$DOMAIN )" 
+    echo "  [ SUCCESS ] incremental website backup ( $BACKUP_DIR/$INCR_BACKUP_DIR/$DOMAIN )" 
     echo
-    echo "  [ SUCCESS ] compressed website backup  ( $BACKUP_DIR/INCR_BKUP/${BACKUP_LABEL}.tar.gz )" 
+    echo "  [ SUCCESS ] compressed website backup  ( $BACKUP_DIR/$INCR_BACKUP_DIR/${BACKUP_LABEL}.tar.gz )" 
     echo
     echo "  WEBSITE BACKUP IS SUCCESSFUL"
     echo
