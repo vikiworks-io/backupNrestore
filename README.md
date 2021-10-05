@@ -9,9 +9,9 @@ Utility to backup and restore a webite. This utility can backup `any website wit
 
 ## Backup website Steps
 
-  1. cd src (or) cd backupNRestore
+  1. cd backupNRestore
   2. feed your website configuration in config.sh
-  3. ./backup.sh 
+  3. ./backup
     [ The backed up website will be compressed and stored as .tar.gz ]
     [ Ex: test.tar.gz ]
    
@@ -26,6 +26,17 @@ Utility to backup and restore a webite. This utility can backup `any website wit
 
   [ This script will restore the website, Make sure db, dns and ssl certificate are configured before restoring ]
 
+## Backup website Steps ( Optimized )
+
+  1. cd backupNRestore
+  2. feed your website configuration in config.sh
+  3. ./backup_optimized tar
+    [ The backed up website will be compressed and stored as .tar.gz ]
+    [ Ex: test.tar.gz ]
+ 
+
+    This utility take backup with version snapshot ( using git ) and use rsync to backkup only the difference from previous backup.
+    backup_optimized is faster than the previous one. you can skip the tar option if you don't want it tobe compressed. 
 
 ## Migrate Website Steps 
 
