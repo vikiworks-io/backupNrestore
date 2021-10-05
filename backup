@@ -383,6 +383,11 @@ function clear_log_files()
 
 function remove_unused_files_n_folders_from_backup()
 {
+
+    if [ -z "$wordpress_optimize" ]; then
+        return
+    fi
+ 
     cd $BACKUP_DIR/$BACKUP_LABEL/
 
     #remove wordpress backup files 

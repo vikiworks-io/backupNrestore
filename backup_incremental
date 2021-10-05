@@ -16,6 +16,13 @@ if [ ! -z "$ARG1" ]; then
     fi
 fi
 
+if [ $compress_backup -eq 0 ]; then
+    echo "  To Backup and Compress Execute:"
+    echo ""
+    echo "      $0 tar"
+    echo ""
+fi
+
 db_exported=0
 
 function get_current_dir()
@@ -400,6 +407,10 @@ function clear_log_files()
 
 function remove_unused_files_n_folders_from_backup()
 {
+    if [ -z "$wordpress_optimize" ]; then
+        return
+    fi
+    
     cd $BACKUP_DIR/$INCR_BACKUP_DIR/$DOMAIN
 
     #remove wordpress backup files 
@@ -418,8 +429,16 @@ function tar_backup()
 
     cd ../
 
-    tar -czvf "${BACKUP_LABEL}.tar.gz" $DOMAIN 1> /dev/null
+    cp -arf $DOMAIN $BACKUP_LABEL 1> /dev/null 2> /dev/null
+
+    if [ $? -ne 0 ]; then
+        cp -rf $DOMAIN $BACKUP_LABEL 1> /dev/null 2> /dev/null
+    fi
+
+    tar -czvf "${BACKUP_LABEL}.tar.gz" $BACKUP_LABEL 1> /dev/null
     [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
+
+    rm -rf $BACKUP_LABEL 1> /dev/null 2> /dev/null
 
     echo
     echo "  [ SUCCESS ] incremental website backup ( $BACKUP_DIR/INCR_BKUP/$DOMAIN )" 

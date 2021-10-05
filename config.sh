@@ -69,4 +69,5 @@ GIT_EMAIL="test@test.com"
 GIT_USERNAME="backupNrestore process"
 ##
 
-
+#uncomment the following to optimize backup for wordpress CMS
+#wordpress_optimize="true"
