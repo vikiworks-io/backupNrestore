@@ -455,7 +455,7 @@ function SNAPSHOT_WEBSITE()
 
     ./snapshot "no_db_export" 
 
-    if [ $? -eq 0 ]; then
+    if [ $? -ne 0 ]; then
         echo " warning: snapshot failed, proceeding backup without snapshot"
     fi
 }
