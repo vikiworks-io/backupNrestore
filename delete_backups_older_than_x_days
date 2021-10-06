@@ -101,8 +101,18 @@ function delete_old_backups()
     echo
 }
 
+function import_config()
+{
+    cd $CURRENT_DIR
+    source ./config.sh
+    [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] "; exit 1; }
+    echo
+    echo
+}
+
 
 get_current_dir
+import_config
 command_exec_dir_check
 arg_check
 delete_old_backups
