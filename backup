@@ -416,6 +416,11 @@ function generate_backup()
     echo
 }
 
+function update_backup_dir_for_traditional_backup()
+{
+    BACKUP_DIR="$BACKUP_DIR/CLASSIC"
+}
+
 function main()
 {
     get_current_dir
@@ -430,6 +435,7 @@ function main()
     check_whether_backup_tool_is_inside_webroot
     get_abs_path_web_root
     input_validation
+    update_backup_dir_for_traditional_backup
     db_access_check
     website_data_check
     create_backup_dir
