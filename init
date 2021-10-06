@@ -44,7 +44,7 @@ if [ "$USER_INPUT" == "YES" ]; then
     echo
     cd $WEBSITE_ROOT_DIR
     [ $? -ne 0 ] && { echo "[ ERROR ] [ ${LINENO} ] "; exit 1; }
-    find . -name .git -delete
+    find . -name .git -exec rm -rf {} \;
     echo
     echo "  INIT SUCCESSFUL"
     echo
