@@ -1,0 +1,22 @@
+cd ..
+echo 
+echo "  Going to delete .git folder if exist"
+echo 
+echo "  WARNING: This may cause all versioning information tobe lost forever"
+echo
+read -p "  Do you want to proceed? [ YES/NO ] " USER_INPUT
+if [ "$USER_INPUT" == "YES" ]; then
+    echo
+    echo "  Deleting all .git folders"
+    echo
+    find . -name .git -delete
+    echo
+    echo "  INIT SUCCESSFUL"
+    echo
+else
+    echo
+    echo "  no files are deleted"
+    echo
+    echo "  INIT ABORTED"
+    echo 
+fi
