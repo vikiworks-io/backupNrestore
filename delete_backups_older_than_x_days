@@ -78,7 +78,7 @@ function delete_old_backups()
 
     FCOUNT=0
     
-    FCOUNT=`find . -type f -name "*.tar.gz" | wc -l`
+    FCOUNT=`find . -type f -name "${DOMAIN}*.tar.gz" | wc -l`
     if [ $FCOUNT -le 0 ]; then
         echo "  info: no backups found"
         exit 0 
@@ -86,7 +86,7 @@ function delete_old_backups()
 
     FCOUNT=0
 
-    FCOUNT=`find . -type f -name "*.tar.gz" -mtime $DAYS_OLD  | wc -l`
+    FCOUNT=`find . -type f -name "${DOMAIN}*.tar.gz" -mtime $DAYS_OLD  | wc -l`
     if [ $FCOUNT -le 0 ]; then
         echo "  info: no backups older than ( $DAYS_OLD days ) found"
         exit 0 
@@ -96,7 +96,7 @@ function delete_old_backups()
     echo "Deleting backups older than ( $DAYS_OLD days )"
     echo
     echo
-    find . -type f -name "*.tar.gz" -mtime $DAYS_OLD -delete    
+    find . -type f -name "${DOMAIN}*.tar.gz" -mtime $DAYS_OLD -delete    
     echo
     echo
 }
