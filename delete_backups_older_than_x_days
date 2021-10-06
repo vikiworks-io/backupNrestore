@@ -93,7 +93,9 @@ function delete_old_backups()
     fi
 
 
-    echo "Deleting backups older than ( $DAYS_OLD days )"
+    echo "  Deleting backups older than ( $DAYS_OLD days )"
+    echo
+    echo "  [ LOCATION ] [ $BACKUP_DIR ]"
     echo
     echo
     find . -type f -name "${DOMAIN}*.tar.gz" -mtime $DAYS_OLD -delete    
