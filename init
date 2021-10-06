@@ -1,4 +1,37 @@
-cd ..
+#!/bin/bash
+# Version 1.4
+#
+#		Author	: Viki (a) Vignesh Natarajan 
+#		Contact	: vikiworks.io
+#		Licence : MIT
+
+
+function get_current_dir()
+{
+    CURRENT_DIR=`pwd -P`
+}
+
+function command_exec_dir_check()
+{
+	if [ ! -f init ]; then
+		echo "error: command should be executed from backupNrestore directory"
+		exit 1
+	fi
+}
+
+function import_config()
+{
+    cd $CURRENT_DIR
+    source ./config.sh
+    [ $? -ne 0 ] && { echo "[ ERROR ] [ ${LINENO} ] "; exit 1; }
+    echo
+    echo
+}
+
+get_current_dir
+command_exec_dir_check
+import_config
+
 echo 
 echo "  Going to delete .git folder if exist"
 echo 
@@ -9,10 +42,13 @@ if [ "$USER_INPUT" == "YES" ]; then
     echo
     echo "  Deleting all .git folders"
     echo
+    cd $WEBSITE_ROOT_DIR
+    [ $? -ne 0 ] && { echo "[ ERROR ] [ ${LINENO} ] "; exit 1; }
     find . -name .git -delete
     echo
     echo "  INIT SUCCESSFUL"
     echo
+    touch .backupNrestore.init
 else
     echo
     echo "  no files are deleted"

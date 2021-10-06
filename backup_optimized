@@ -47,7 +47,7 @@ function prereq_check()
 
 function command_exec_dir_check()
 {
-	if [ ! -f backup ]; then
+	if [ ! -f backup_optimized ]; then
 		echo "error: command should be executed from backupNrestore directory"
 		exit 1
 	fi
@@ -465,11 +465,25 @@ function SNAPSHOT_WEBSITE()
     fi
 }
 
+function is_tool_initialized()
+{
+    if [ ! -f ../.backupNrestore.init ]; then
+        echo "  error: backupNrestore should be initialized before using it"
+        echo
+        echo "  Help: Execute the following command"
+        echo
+        echo "      ./init "
+        echo
+        exit 1
+    fi
+}
+
 function main()
 {
     get_current_dir
     prereq_check
     command_exec_dir_check
+    is_tool_initialized
     get_tool_name
     get_timestamp
     import_config
@@ -504,6 +518,7 @@ function main()
 
 # Main Code
 ./banner.sh 2> /dev/null
+
 main
 
 
