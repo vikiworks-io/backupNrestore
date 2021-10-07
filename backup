@@ -418,7 +418,7 @@ function generate_backup()
 
 function update_backup_dir_for_traditional_backup()
 {
-    BACKUP_DIR="$BACKUP_DIR/CLASSIC"
+    BACKUP_DIR="$BACKUP_DIR/CLASSIC_BACKUP"
 }
 
 function main()
