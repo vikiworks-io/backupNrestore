@@ -7,3 +7,12 @@ The following tasks has to be implemented soon,
         5. Verify whether the DB username, DB password, DB name exist in some code config file before backing up. [ Otherwise we will be exporting code for this website and db for some other website]
 
 
+Other Tasks:
+
+    - dry run option to test DB, Web Root and Backup path are okay. ( config check )
+    - Option to add daily backup to cron-tab with only last 2 backup persist
+    - Option to add weekly backup to cron-tab with only last 2 backup persist
+    - Option to check disk size before backup and report error on backup failure due to disk space limitation
+
+
+
