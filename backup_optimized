@@ -371,6 +371,8 @@ function export_db(){
 
 function export_website_database()
 {
+    echo "  exporting database (s)"
+    
     if [ ! -z $DB1_NAME ]; then
     	export_db $DB1_NAME $DB1_USERNAME  $DB1_PASSWORD "$CURRENT_DIR/db_dump/${DB1_NAME}.sql"
     fi
@@ -429,6 +431,7 @@ function remove_unused_files_n_folders_from_backup()
 # Compress website backup and create a tar.gz archive
 function tar_backup()
 {
+
     cd $BACKUP_DIR/$INCR_BACKUP_DIR/$DOMAIN
     [ $? -ne 0 ] && { echo "[ $TIME_STAMP ] [ ERROR ] [ ${LINENO} ] " ; exit 1; }
 
@@ -458,7 +461,7 @@ function SNAPSHOT_WEBSITE()
 {
     cd $CURRENT_DIR
 
-    ./snapshot "no_db_export" 
+    ./snapshot "no_db_export" 1> /dev/null 2> /dev/null 
 
     if [ $? -ne 0 ]; then
         echo " warning: snapshot failed, proceeding backup without snapshot"
